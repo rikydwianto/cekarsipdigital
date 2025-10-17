@@ -10,10 +10,21 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 import json
 from datetime import datetime
 import platform
+import io
+
+# QR Code library
+import qrcode
+
+# Import template loader
+from src_web.template_loader import TemplateLoader, get_default_context, create_api_response, json_response
 
 
 class HelloWorldHandler(BaseHTTPRequestHandler):
-    """Custom HTTP Request Handler untuk Hello World"""
+    """Custom HTTP Request Handler dengan template system dan API support"""
+    
+    def __init__(self, *args, **kwargs):
+        self.template_loader = TemplateLoader()
+        super().__init__(*args, **kwargs)
     
     def log_message(self, format, *args):
         """Override log_message untuk suppress console output"""
@@ -22,185 +33,82 @@ class HelloWorldHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         """Handle GET request"""
         try:
+            # Handle static files
+            if self.path.startswith('/static/'):
+                self.serve_static_file()
+                return
+            
+            # Handle QR Code generation
+            if self.path == '/qrcode':
+                self.serve_qrcode()
+                return
+            
+            # Handle API routes
+            if self.path.startswith('/api/'):
+                self.serve_api()
+                return
+            
+            # Handle home page
+            if self.path == '/' or self.path == '/index.html':
+                self.serve_home_page()
+                return
+            
+            # Handle about page
+            if self.path == '/about':
+                self.serve_about_page()
+                return
+            
+            # Handle API docs page
+            if self.path == '/api/docs':
+                self.serve_api_docs_page()
+                return
+            
+            # 404 Not Found
+            self.send_error(404, "Page not found")
+            
+        except Exception as e:
+            self.serve_error_page(str(e))
+
+    
+    def serve_static_file(self):
+        """Serve static files (CSS, JS, images)"""
+        try:
+            # Remove /static/ prefix
+            file_path = self.path[8:]  # len('/static/') = 8
+            
+            content, content_type = self.template_loader.get_static_file(file_path)
+            
+            if content is None:
+                self.send_error(404, "Static file not found")
+                return
+            
+            self.send_response(200)
+            self.send_header('Content-type', content_type)
+            
+            if isinstance(content, str):
+                content_bytes = content.encode('utf-8')
+            else:
+                content_bytes = content
+            
+            self.send_header('Content-Length', str(len(content_bytes)))
+            self.end_headers()
+            self.wfile.write(content_bytes)
+            
+        except Exception as e:
+            self.send_error(500, f"Error serving static file: {str(e)}")
+    
+    def serve_home_page(self):
+        """Serve halaman utama"""
+        try:
             # Get server info
             server_info = self.server.server_info if hasattr(self.server, 'server_info') else {}
+            server_info['page_title'] = 'Home'
             
-            # HTML response
-            html_content = f"""
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arsip Owncloud - Web Server</title>
-    <style>
-        * {{
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }}
-        
-        body {{
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }}
-        
-        .container {{
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            padding: 40px;
-            max-width: 600px;
-            width: 100%;
-            animation: fadeIn 0.5s ease-in;
-        }}
-        
-        @keyframes fadeIn {{
-            from {{ opacity: 0; transform: translateY(-20px); }}
-            to {{ opacity: 1; transform: translateY(0); }}
-        }}
-        
-        h1 {{
-            color: #667eea;
-            text-align: center;
-            margin-bottom: 10px;
-            font-size: 2.5em;
-        }}
-        
-        .emoji {{
-            font-size: 3em;
-            text-align: center;
-            margin-bottom: 20px;
-        }}
-        
-        .subtitle {{
-            text-align: center;
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 1.1em;
-        }}
-        
-        .info-box {{
-            background: #f8f9fa;
-            border-left: 4px solid #667eea;
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 5px;
-        }}
-        
-        .info-label {{
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 5px;
-        }}
-        
-        .info-value {{
-            color: #666;
-            font-family: 'Courier New', monospace;
-            font-size: 0.95em;
-        }}
-        
-        .status {{
-            background: #d4edda;
-            color: #155724;
-            padding: 10px;
-            border-radius: 5px;
-            text-align: center;
-            margin: 20px 0;
-            font-weight: bold;
-        }}
-        
-        .footer {{
-            text-align: center;
-            margin-top: 30px;
-            color: #999;
-            font-size: 0.9em;
-        }}
-        
-        .badge {{
-            display: inline-block;
-            padding: 5px 10px;
-            background: #667eea;
-            color: white;
-            border-radius: 15px;
-            font-size: 0.85em;
-            margin: 5px;
-        }}
-        
-        .pulse {{
-            animation: pulse 2s infinite;
-        }}
-        
-        @keyframes pulse {{
-            0%, 100% {{ opacity: 1; }}
-            50% {{ opacity: 0.5; }}
-        }}
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="emoji">🌐</div>
-        <h1>Hello World!</h1>
-        <p class="subtitle">Arsip Owncloud Web Server</p>
-        
-        <div class="status pulse">
-            ✅ Server Aktif dan Berjalan
-        </div>
-        
-        <div class="info-box">
-            <div class="info-label">📅 Waktu Server</div>
-            <div class="info-value">{datetime.now().strftime('%d %B %Y, %H:%M:%S')}</div>
-        </div>
-        
-        <div class="info-box">
-            <div class="info-label">🖥️ Sistem Operasi</div>
-            <div class="info-value">{platform.system()} {platform.release()}</div>
-        </div>
-        
-        <div class="info-box">
-            <div class="info-label">🐍 Python Version</div>
-            <div class="info-value">{platform.python_version()}</div>
-        </div>
-        
-        <div class="info-box">
-            <div class="info-label">💻 Hostname</div>
-            <div class="info-value">{platform.node()}</div>
-        </div>
-        
-        <div class="info-box">
-            <div class="info-label">🌐 IP Address</div>
-            <div class="info-value">{server_info.get('local_ip', 'N/A')}</div>
-        </div>
-        
-        <div class="info-box">
-            <div class="info-label">🔌 Port</div>
-            <div class="info-value">{server_info.get('port', 'N/A')}</div>
-        </div>
-        
-        <div class="info-box">
-            <div class="info-label">📁 Document Root</div>
-            <div class="info-value">{server_info.get('default_folder', 'N/A')}</div>
-        </div>
-        
-        <div style="text-align: center; margin-top: 20px;">
-            <span class="badge">Web Server</span>
-            <span class="badge">Python {platform.python_version()}</span>
-            <span class="badge">Arsip Digital</span>
-        </div>
-        
-        <div class="footer">
-            <p>🚀 Powered by Arsip Owncloud Application</p>
-            <p style="margin-top: 5px;">💡 Fitur browse file akan segera hadir!</p>
-        </div>
-    </div>
-</body>
-</html>
-            """
+            # Get context
+            context = get_default_context(server_info)
+            
+            # Render template dengan partial
+            html_content = self.template_loader.render('index.html', context, active_page='home')
             
             # Send response
             self.send_response(200)
@@ -210,32 +118,221 @@ class HelloWorldHandler(BaseHTTPRequestHandler):
             self.wfile.write(html_content.encode('utf-8'))
             
         except Exception as e:
-            # Error response
-            error_html = f"""
+            self.serve_error_page(str(e))
+    
+    def serve_about_page(self):
+        """Serve halaman about"""
+        try:
+            # Get server info
+            server_info = self.server.server_info if hasattr(self.server, 'server_info') else {}
+            server_info['page_title'] = 'About'
+            
+            # Get context
+            context = get_default_context(server_info)
+            
+            # Render template
+            html_content = self.template_loader.render('about.html', context, active_page='about')
+            
+            # Send response
+            self.send_response(200)
+            self.send_header('Content-type', 'text/html; charset=utf-8')
+            self.send_header('Content-Length', str(len(html_content.encode('utf-8'))))
+            self.end_headers()
+            self.wfile.write(html_content.encode('utf-8'))
+            
+        except Exception as e:
+            self.serve_error_page(str(e))
+    
+    def serve_api_docs_page(self):
+        """Serve halaman API documentation"""
+        try:
+            # Get server info
+            server_info = self.server.server_info if hasattr(self.server, 'server_info') else {}
+            server_info['page_title'] = 'API Documentation'
+            
+            # Get context
+            context = get_default_context(server_info)
+            
+            # Render template
+            html_content = self.template_loader.render('api_docs.html', context, active_page='api')
+            
+            # Send response
+            self.send_response(200)
+            self.send_header('Content-type', 'text/html; charset=utf-8')
+            self.send_header('Content-Length', str(len(html_content.encode('utf-8'))))
+            self.end_headers()
+            self.wfile.write(html_content.encode('utf-8'))
+            
+        except Exception as e:
+            self.serve_error_page(str(e))
+    
+    def serve_qrcode(self):
+        """Generate dan serve QR code untuk URL server"""
+        try:
+            # Get server info
+            server_info = self.server.server_info if hasattr(self.server, 'server_info') else {}
+            local_ip = server_info.get('local_ip', '127.0.0.1')
+            port = server_info.get('port', 8080)
+            
+            # Create URL
+            url = f"http://{local_ip}:{port}"
+            
+            # Generate QR code
+            qr = qrcode.QRCode(
+                version=1,
+                error_correction=qrcode.constants.ERROR_CORRECT_L,
+                box_size=10,
+                border=4,
+            )
+            qr.add_data(url)
+            qr.make(fit=True)
+            
+            # Create image
+            img = qr.make_image(fill_color="black", back_color="white")
+            
+            # Save to bytes
+            img_buffer = io.BytesIO()
+            img.save(img_buffer, format='PNG')
+            img_bytes = img_buffer.getvalue()
+            
+            # Send response
+            self.send_response(200)
+            self.send_header('Content-type', 'image/png')
+            self.send_header('Content-Length', str(len(img_bytes)))
+            self.send_header('Cache-Control', 'no-cache')
+            self.end_headers()
+            self.wfile.write(img_bytes)
+            
+        except Exception as e:
+            self.send_error(500, f"Error generating QR code: {str(e)}")
+    
+    def serve_api(self):
+        """Serve API endpoints dengan JSON response"""
+        try:
+            # Get server info
+            server_info = self.server.server_info if hasattr(self.server, 'server_info') else {}
+            
+            # API: /api/hello
+            if self.path == '/api/hello':
+                response = create_api_response(
+                    success=True,
+                    message='Halo Dunia!',
+                    data={
+                        'greeting': 'Hello World',
+                        'description': 'API endpoint untuk testing'
+                    }
+                )
+                self.send_json_response(response)
+                return
+            
+            if self.path == '/api/test':
+                response = create_api_response(
+                    success=True,
+                    message='Hallo test!',
+                    data={
+                        'greeting': 'Hello World',
+                        'description': 'Berhasil'
+                    }
+                )
+                self.send_json_response(response)
+                return
+            
+            # API: /api/status
+            if self.path == '/api/status':
+                response = create_api_response(
+                    success=True,
+                    message='Server running',
+                    data={
+                        'status': 'online',
+                        'server_time': datetime.now().strftime('%d %B %Y, %H:%M:%S'),
+                        'os_info': f"{platform.system()} {platform.release()}",
+                        'python_version': platform.python_version(),
+                        'hostname': platform.node(),
+                        'local_ip': server_info.get('local_ip', 'N/A'),
+                        'port': server_info.get('port', 'N/A')
+                    }
+                )
+                self.send_json_response(response)
+                return
+            
+            # API: /api/server-info
+            if self.path == '/api/server-info':
+                response = create_api_response(
+                    success=True,
+                    message='Server information retrieved',
+                    data={
+                        'server': {
+                            'ip': server_info.get('local_ip', 'N/A'),
+                            'port': server_info.get('port', 'N/A'),
+                            'status': 'running'
+                        },
+                        'system': {
+                            'os': f"{platform.system()} {platform.release()}",
+                            'python': platform.python_version(),
+                            'hostname': platform.node()
+                        },
+                        'folder': {
+                            'default': server_info.get('default_folder', 'N/A')
+                        }
+                    }
+                )
+                self.send_json_response(response)
+                return
+            
+            # API endpoint tidak ditemukan
+            response = create_api_response(
+                success=False,
+                message='API endpoint not found',
+                error=f'Endpoint {self.path} tidak tersedia'
+            )
+            self.send_json_response(response, status_code=404)
+            
+        except Exception as e:
+            response = create_api_response(
+                success=False,
+                message='Internal server error',
+                error=str(e)
+            )
+            self.send_json_response(response, status_code=500)
+    
+    def send_json_response(self, response_dict, status_code=200):
+        """Send JSON response"""
+        json_content = json_response(response_dict)
+        
+        self.send_response(status_code)
+        self.send_header('Content-type', 'application/json; charset=utf-8')
+        self.send_header('Content-Length', str(len(json_content.encode('utf-8'))))
+        self.end_headers()
+        self.wfile.write(json_content.encode('utf-8'))
+
+    
+    def serve_error_page(self, error_message):
+        """Serve halaman error"""
+        try:
+            context = {'error_message': error_message}
+            html_content = self.template_loader.render('error.html', context)
+            
+            self.send_response(500)
+            self.send_header('Content-type', 'text/html; charset=utf-8')
+            self.end_headers()
+            self.wfile.write(html_content.encode('utf-8'))
+        except:
+            # Fallback jika template error juga gagal
+            fallback_html = f"""
 <!DOCTYPE html>
 <html>
-<head>
-    <meta charset="UTF-8">
-    <title>Error</title>
-    <style>
-        body {{ font-family: Arial; padding: 40px; background: #f5f5f5; }}
-        .error {{ background: white; padding: 30px; border-radius: 10px; max-width: 600px; margin: 0 auto; }}
-        h1 {{ color: #d32f2f; }}
-    </style>
-</head>
+<head><meta charset="UTF-8"><title>Error</title></head>
 <body>
-    <div class="error">
-        <h1>❌ Error</h1>
-        <p>Terjadi kesalahan saat memproses request:</p>
-        <pre>{str(e)}</pre>
-    </div>
+    <h1>Error</h1>
+    <pre>{error_message}</pre>
 </body>
 </html>
             """
             self.send_response(500)
             self.send_header('Content-type', 'text/html; charset=utf-8')
             self.end_headers()
-            self.wfile.write(error_html.encode('utf-8'))
+            self.wfile.write(fallback_html.encode('utf-8'))
+
 
 
 class WebServerManager:

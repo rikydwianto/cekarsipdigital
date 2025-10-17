@@ -1,0 +1,154 @@
+{{header}}
+
+<!-- API Documentation -->
+<div class="container my-5">
+  <div class="row">
+    <div class="col-lg-10 mx-auto">
+      <h1 class="mb-4">
+        <i class="bi bi-file-earmark-code text-primary"></i> API Documentation
+      </h1>
+
+      <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i>
+        Semua endpoint API mengembalikan response dalam format JSON dengan
+        struktur yang konsisten.
+      </div>
+
+      <!-- Response Structure -->
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">Response Structure</h5>
+        </div>
+        <div class="card-body">
+          <h6>Success Response:</h6>
+          <pre class="bg-light p-3 rounded"><code>{
+  "success": true,
+  "message": "Deskripsi pesan",
+  "data": { ... },
+  "timestamp": "2025-10-17 12:00:00"
+}</code></pre>
+
+          <h6 class="mt-4">Error Response:</h6>
+          <pre class="bg-light p-3 rounded"><code>{
+  "success": false,
+  "message": "Deskripsi error",
+  "error": "Detail error",
+  "timestamp": "2025-10-17 12:00:00"
+}</code></pre>
+        </div>
+      </div>
+
+      <!-- Available Endpoints -->
+      <h3 class="mb-3">Available Endpoints</h3>
+
+      <!-- API Status -->
+      <div class="card shadow-sm border-0 mb-3">
+        <div class="card-header bg-light">
+          <div class="d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">
+              <span class="badge bg-success">GET</span> /api/status
+            </h6>
+            <a
+              href="/api/status"
+              class="btn btn-sm btn-primary"
+              target="_blank"
+            >
+              Try it <i class="bi bi-box-arrow-up-right"></i>
+            </a>
+          </div>
+        </div>
+        <div class="card-body">
+          <p class="text-muted">
+            Mendapatkan status server dan informasi sistem.
+          </p>
+          <h6>Response Example:</h6>
+          <pre class="bg-light p-3 rounded small"><code>{
+  "success": true,
+  "message": "Server running",
+  "data": {
+    "status": "online",
+    "server_time": "17 October 2025, 12:00:00",
+    "os_info": "Windows 10",
+    "python_version": "3.10.0",
+    "hostname": "DESKTOP-PC",
+    "local_ip": "192.168.1.100",
+    "port": 8080
+  },
+  "timestamp": "2025-10-17 12:00:00"
+}</code></pre>
+        </div>
+      </div>
+
+      <!-- API Hello -->
+      <div class="card shadow-sm border-0 mb-3">
+        <div class="card-header bg-light">
+          <div class="d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">
+              <span class="badge bg-success">GET</span> /api/hello
+            </h6>
+            <a href="/api/hello" class="btn btn-sm btn-primary" target="_blank">
+              Try it <i class="bi bi-box-arrow-up-right"></i>
+            </a>
+          </div>
+        </div>
+        <div class="card-body">
+          <p class="text-muted">Endpoint test sederhana untuk validasi API.</p>
+          <h6>Response Example:</h6>
+          <pre class="bg-light p-3 rounded small"><code>{
+  "success": true,
+  "message": "Halo Dunia!",
+  "data": {
+    "greeting": "Hello World",
+    "description": "API endpoint untuk testing"
+  },
+  "timestamp": "2025-10-17 12:00:00"
+}</code></pre>
+        </div>
+      </div>
+
+      <!-- API Server Info -->
+      <div class="card shadow-sm border-0 mb-3">
+        <div class="card-header bg-light">
+          <div class="d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">
+              <span class="badge bg-success">GET</span> /api/server-info
+            </h6>
+            <a
+              href="/api/server-info"
+              class="btn btn-sm btn-primary"
+              target="_blank"
+            >
+              Try it <i class="bi bi-box-arrow-up-right"></i>
+            </a>
+          </div>
+        </div>
+        <div class="card-body">
+          <p class="text-muted">Mendapatkan informasi detail tentang server.</p>
+          <h6>Response Example:</h6>
+          <pre class="bg-light p-3 rounded small"><code>{
+  "success": true,
+  "message": "Server information retrieved",
+  "data": {
+    "server": {
+      "ip": "192.168.1.100",
+      "port": 8080,
+      "status": "running"
+    },
+    "system": {
+      "os": "Windows 10",
+      "python": "3.10.0",
+      "hostname": "DESKTOP-PC"
+    },
+    "folder": {
+      "default": "C:/Data/Arsip"
+    }
+  },
+  "timestamp": "2025-10-17 12:00:00"
+}</code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{footer}}

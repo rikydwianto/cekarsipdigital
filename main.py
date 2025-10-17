@@ -5,6 +5,9 @@ import pandas as pd
 from typing import Dict
 from datetime import datetime
 import json
+import qrcode
+from PIL import Image, ImageTk
+import io
 
 # Import business logic modules
 from arsip_logic import ArsipProcessor, FileManager, AnggotaFolderReader
@@ -529,9 +532,35 @@ class SettingsApp:
         )
         url_network_label.grid(row=2, column=0, sticky=tk.W, padx=(0, 0))
         
+        # QR Code frame
+        qr_frame = ttk.LabelFrame(webserver_frame, text="📱 QR Code untuk HP", padding="10")
+        qr_frame.grid(row=5, column=0, sticky=(tk.W, tk.E), pady=(10, 15))
+        qr_frame.columnconfigure(0, weight=1)
+        
+        # QR Code info
+        qr_info_label = ttk.Label(
+            qr_frame,
+            text="Scan QR code ini dari HP (pastikan 1 jaringan WiFi)",
+            font=("Arial", 8),
+            foreground="gray"
+        )
+        qr_info_label.grid(row=0, column=0, pady=(0, 10))
+        
+        # QR Code container
+        self.qr_label = ttk.Label(qr_frame, text="QR Code akan muncul saat server aktif", foreground="gray")
+        self.qr_label.grid(row=1, column=0)
+        
+        # Refresh QR button
+        refresh_qr_btn = ttk.Button(
+            qr_frame,
+            text="🔄 Refresh QR Code",
+            command=self.refresh_qr_code
+        )
+        refresh_qr_btn.grid(row=2, column=0, pady=(10, 0))
+        
         # Server control buttons
         server_btn_frame = ttk.Frame(webserver_frame)
-        server_btn_frame.grid(row=5, column=0)
+        server_btn_frame.grid(row=6, column=0, pady=(10, 0))
         
         self.start_server_btn = ttk.Button(
             server_btn_frame, 
@@ -582,13 +611,58 @@ class SettingsApp:
             self.server_status_var.set("🟢 Aktif")
             self.start_server_btn.config(state=tk.DISABLED)
             self.stop_server_btn.config(state=tk.NORMAL)
+            # Generate QR Code saat server aktif
+            self.generate_qr_code(info["url_network"])
         else:
             self.server_status_var.set("⚫ Tidak Aktif")
             self.start_server_btn.config(state=tk.NORMAL)
             self.stop_server_btn.config(state=tk.DISABLED)
+            # Clear QR Code saat server mati
+            self.qr_label.config(image='', text="QR Code akan muncul saat server aktif", foreground="gray")
         
         self.url_local_var.set(info["url_local"])
         self.url_network_var.set(info["url_network"])
+    
+    def generate_qr_code(self, url):
+        """Generate QR code untuk URL"""
+        try:
+            # Create QR code
+            qr = qrcode.QRCode(
+                version=1,
+                error_correction=qrcode.constants.ERROR_CORRECT_L,
+                box_size=10,
+                border=4,
+            )
+            qr.add_data(url)
+            qr.make(fit=True)
+            
+            # Create image
+            img = qr.make_image(fill_color="black", back_color="white")
+            
+            # Resize untuk fit di window (200x200)
+            img = img.resize((150, 150), Image.Resampling.LANCZOS)
+            
+            # Convert to PhotoImage
+            photo = ImageTk.PhotoImage(img)
+            
+            # Store reference to prevent garbage collection
+            self.qr_photo = photo
+            
+            # Update label
+            self.qr_label.config(image=photo, text="")
+            
+        except Exception as e:
+            self.qr_label.config(image='', text=f"Error: {str(e)}", foreground="red")
+    
+    def refresh_qr_code(self):
+        """Refresh QR code"""
+        info = web_server_manager.get_server_info()
+        if info["status"] == "Running":
+            self.generate_qr_code(info["url_network"])
+            messagebox.showinfo("QR Code", "QR Code berhasil di-refresh!")
+        else:
+            messagebox.showwarning("Warning", "Server belum aktif!\nStart server terlebih dahulu.")
+
     
     def start_web_server(self):
         """Start web server"""
@@ -624,6 +698,9 @@ class SettingsApp:
             self.status_var.set("✅ Web server berhasil dihentikan!")
             messagebox.showinfo("Server Stopped", message)
             self.update_server_status()
+            
+            # Clear QR code
+            self.qr_label.config(image='', text="QR Code akan muncul saat server aktif", foreground="gray")
             
             # Clear status after 3 seconds
             self.root.after(3000, lambda: self.status_var.set(""))

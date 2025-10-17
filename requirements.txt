@@ -1,8 +1,12 @@
 # Requirements untuk Aplikasi Arsip Digital
 # Tkinter sudah built-in dengan Python, tidak perlu install terpisah
 
+# Core dependencies
+pandas>=2.0.0
+openpyxl>=3.0.0
+qrcode[pil]>=8.0
+
 # Optional packages yang mungkin dibutuhkan untuk pengembangan selanjutnya:
-# pillow>=9.0.0  # untuk manipulasi gambar
-# openpyxl>=3.0.0  # untuk membaca file Excel
+# pillow>=9.0.0  # untuk manipulasi gambar (sudah terinstall via qrcode[pil])
 # PyPDF2>=3.0.0  # untuk membaca file PDF
 # python-docx>=0.8.0  # untuk membaca file Word
