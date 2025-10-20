@@ -14,6 +14,49 @@ from arsip_logic import ArsipProcessor, FileManager, AnggotaFolderReader
 from web_server import get_web_server_manager
 
 
+def get_responsive_dimensions(base_width, base_height, screen_width, screen_height):
+    """
+    Calculate responsive window dimensions based on screen size
+    
+    Args:
+        base_width: Base width for large screens
+        base_height: Base height for large screens
+        screen_width: Current screen width
+        screen_height: Current screen height
+    
+    Returns:
+        tuple: (width, height, padding_size, font_sizes)
+    """
+    if screen_width >= 1920:  # Large screens (4K, etc)
+        width = base_width
+        height = base_height
+        padding = 30
+        fonts = {'title': 18, 'subtitle': 11, 'normal': 10, 'small': 9}
+    elif screen_width >= 1366:  # Medium screens (standard laptop)
+        width = int(base_width * 0.95)
+        height = int(base_height * 0.95)
+        padding = 25
+        fonts = {'title': 16, 'subtitle': 10, 'normal': 9, 'small': 8}
+    elif screen_width >= 1024:  # Small laptop
+        width = int(base_width * 0.85)
+        height = int(base_height * 0.85)
+        padding = 20
+        fonts = {'title': 14, 'subtitle': 9, 'normal': 8, 'small': 7}
+    else:  # Very small screens
+        width = int(base_width * 0.75)
+        height = int(base_height * 0.75)
+        padding = 15
+        fonts = {'title': 12, 'subtitle': 8, 'normal': 7, 'small': 6}
+    
+    # Ensure window doesn't exceed 85% of screen size
+    max_width = int(screen_width * 0.85)
+    max_height = int(screen_height * 0.85)
+    width = min(width, max_width)
+    height = min(height, max_height)
+    
+    return width, height, padding, fonts
+
+
 # ConfigManager untuk mengelola settings
 class ConfigManager:
     """Manager untuk menyimpan dan membaca konfigurasi aplikasi"""
@@ -116,8 +159,21 @@ class MainMenu:
     def setup_window(self):
         """Setup window utama untuk menu"""
         self.root.title("Aplikasi Arsip Digital - Menu Utama")
-        self.root.geometry("500x700")
+        
+        # Get screen dimensions
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        
+        # Get responsive dimensions
+        width, height, self.padding, self.fonts = get_responsive_dimensions(
+            500, 700, screen_width, screen_height
+        )
+        
+        self.root.geometry(f"{width}x{height}")
         self.root.resizable(True, True)
+        
+        # Set minimum size to prevent too small windows
+        self.root.minsize(350, 450)
         
         # Center window
         self.center_window()
@@ -139,8 +195,8 @@ class MainMenu:
     
     def create_menu_widgets(self):
         """Membuat widget untuk menu utama"""
-        # Main frame
-        main_frame = ttk.Frame(self.root, padding="30")
+        # Main frame dengan padding responsif
+        main_frame = ttk.Frame(self.root, padding=str(self.padding))
         main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         
         # Configure grid weights
@@ -152,19 +208,20 @@ class MainMenu:
         logo_frame = ttk.Frame(main_frame)
         logo_frame.grid(row=0, column=0, pady=(0, 20))
         
-        # Bisa ditambahkan logo di sini nanti
+        # Logo size yang responsif
+        logo_size = max(32, self.fonts['title'] * 2)
         logo_label = ttk.Label(
             logo_frame, 
             text="📁", 
-            font=("Arial", 48)
+            font=("Arial", logo_size)
         )
         logo_label.grid(row=0, column=0)
         
-        # Title
+        # Title dengan ukuran font responsif
         title_label = ttk.Label(
             main_frame, 
             text="APLIKASI ARSIP DIGITAL", 
-            font=("Arial", 18, "bold")
+            font=("Arial", self.fonts['title'], "bold")
         )
         title_label.grid(row=1, column=0, pady=(0, 10))
         
@@ -172,7 +229,7 @@ class MainMenu:
         subtitle_label = ttk.Label(
             main_frame, 
             text="Sistem Manajemen Arsip Digital",
-            font=("Arial", 10),
+            font=("Arial", self.fonts['subtitle']),
             foreground="gray"
         )
         subtitle_label.grid(row=2, column=0, pady=(0, 30))
@@ -182,56 +239,33 @@ class MainMenu:
         menu_frame.grid(row=3, column=0, pady=(0, 20))
         menu_frame.columnconfigure(0, weight=1)
         
-        # Menu button style
+        # Menu button style dengan ukuran responsif
         style = ttk.Style()
-        style.configure("Menu.TButton", padding=(20, 15), font=("Arial", 11))
+        button_padding = (max(12, self.padding-8), max(10, self.padding-12))
+        style.configure("Menu.TButton", padding=button_padding, font=("Arial", self.fonts['normal']))
         
-        # Cek Arsip Digital button
-        cek_arsip_btn = ttk.Button(
-            menu_frame,
-            text="📋 Cek Arsip Digital",
-            command=self.open_cek_arsip,
-            style="Menu.TButton",
-            width=25
-        )
-        cek_arsip_btn.grid(row=0, column=0, pady=(0, 10), sticky=(tk.W, tk.E))
+        # Button width yang responsif
+        button_width = max(20, 30 - (30 - self.padding))
         
-        # Scan Folder Arsip Digital button
-        kelola_arsip_btn = ttk.Button(
-            menu_frame,
-            text="📂 Scan Folder Arsip Digital",
-            command=self.open_scan_folder,
-            style="Menu.TButton",
-            width=25
-        )
-        kelola_arsip_btn.grid(row=1, column=0, pady=(0, 10), sticky=(tk.W, tk.E))
+        # Menu buttons
+        buttons = [
+            ("📋 Cek Arsip Digital", self.open_cek_arsip),
+            ("📂 Scan Folder Arsip Digital", self.open_scan_folder),
+            ("�️ Universal Scan Database", self.open_universal_scan),
+            ("�📊 Scan File Besar", self.open_scan_large_files),
+            ("💰 Cek Pengajuan Dana", self.open_cek_pengajuan_dana),
+            ("⚙️ Pengaturan", self.open_settings)
+        ]
         
-        laporan_btn = ttk.Button(
-            menu_frame,
-            text="📊 Scan File Besar",
-            command=self.open_scan_large_files,
-            style="Menu.TButton",
-            width=25
-        )
-        laporan_btn.grid(row=2, column=0, pady=(0, 10), sticky=(tk.W, tk.E))
-        
-        cek_pengajuan_btn = ttk.Button(
-            menu_frame,
-            text="💰 Cek Pengajuan Dana",
-            command=self.open_cek_pengajuan_dana,
-            style="Menu.TButton",
-            width=25
-        )
-        cek_pengajuan_btn.grid(row=3, column=0, pady=(0, 10), sticky=(tk.W, tk.E))
-        
-        pengaturan_btn = ttk.Button(
-            menu_frame,
-            text="⚙️ Pengaturan",
-            command=self.open_settings,
-            style="Menu.TButton",
-            width=25
-        )
-        pengaturan_btn.grid(row=4, column=0, pady=(0, 10), sticky=(tk.W, tk.E))
+        for i, (text, command) in enumerate(buttons):
+            btn = ttk.Button(
+                menu_frame,
+                text=text,
+                command=command,
+                style="Menu.TButton",
+                width=button_width
+            )
+            btn.grid(row=i, column=0, pady=(0, 10), sticky=(tk.W, tk.E))
         
         # Footer frame
         footer_frame = ttk.Frame(main_frame)
@@ -249,9 +283,10 @@ class MainMenu:
         version_label = ttk.Label(
             footer_frame,
             text="v1.0.5 - Developed by Riky Dwianto",
-            font=("Arial", 8),
+            font=("Arial", self.fonts['small']),
             foreground="gray"
         )
+        version_label.grid(row=1, column=0, pady=(10, 0))
         version_label.grid(row=1, column=0, pady=(10, 0))
     
     def open_cek_arsip(self):
@@ -334,6 +369,21 @@ class MainMenu:
         
         settings_window.protocol("WM_DELETE_WINDOW", on_settings_close)
     
+    def open_universal_scan(self):
+        """Membuka form Universal Scan Database"""
+        # Hide main menu window
+        self.root.withdraw()
+        
+        # Create new window for universal scan
+        universal_window = tk.Toplevel(self.root)
+        universal_app = UniversalScanApp(universal_window, self.root)
+        
+        # Handle window close to return to main menu
+        def on_universal_close():
+            universal_window.destroy()
+            self.root.deiconify()  # Show main menu again
+        
+        universal_window.protocol("WM_DELETE_WINDOW", on_universal_close)
     
     def coming_soon(self):
         """Placeholder untuk fitur yang belum tersedia"""
@@ -362,8 +412,21 @@ class SettingsApp:
     def setup_window(self):
         """Setup window pengaturan"""
         self.root.title("Pengaturan - Aplikasi Arsip Digital")
-        self.root.geometry("700x700")
+        
+        # Get screen dimensions
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        
+        # Get responsive dimensions
+        width, height, self.padding, self.fonts = get_responsive_dimensions(
+            700, 800, screen_width, screen_height
+        )
+        
+        self.root.geometry(f"{width}x{height}")
         self.root.resizable(True, True)
+        
+        # Set minimum size to prevent too small windows
+        self.root.minsize(480, 500)
         
         # Center window
         self.center_window()
@@ -379,8 +442,11 @@ class SettingsApp:
     
     def create_widgets(self):
         """Membuat widget untuk pengaturan"""
-        # Main frame
-        main_frame = ttk.Frame(self.root, padding="30")
+        # Main frame dengan padding yang responsif
+        screen_width = self.root.winfo_screenwidth()
+        padding_size = 30 if screen_width >= 1366 else 20 if screen_width >= 1024 else 15
+        
+        main_frame = ttk.Frame(self.root, padding=str(padding_size))
         main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         
         # Configure grid weights
@@ -388,35 +454,39 @@ class SettingsApp:
         self.root.rowconfigure(0, weight=1)
         main_frame.columnconfigure(0, weight=1)
         
-        # Title
+        # Title dengan ukuran font responsif
+        title_size = 16 if screen_width >= 1366 else 14 if screen_width >= 1024 else 12
         title_label = ttk.Label(
             main_frame, 
             text="⚙️ PENGATURAN", 
-            font=("Arial", 16, "bold")
+            font=("Arial", title_size, "bold")
         )
         title_label.grid(row=0, column=0, pady=(0, 10))
         
         # Subtitle
+        subtitle_size = 10 if screen_width >= 1366 else 9 if screen_width >= 1024 else 8
         subtitle_label = ttk.Label(
             main_frame, 
             text="Konfigurasi default untuk aplikasi",
-            font=("Arial", 10),
+            font=("Arial", subtitle_size),
             foreground="gray"
         )
         subtitle_label.grid(row=1, column=0, pady=(0, 30))
         
-        # Frame untuk Default Folder
-        folder_frame = ttk.LabelFrame(main_frame, text="Default Folder Arsip Digital", padding="15")
+        # Frame untuk Default Folder dengan padding responsif
+        folder_padding = 15 if screen_width >= 1366 else 12 if screen_width >= 1024 else 10
+        folder_frame = ttk.LabelFrame(main_frame, text="Default Folder Arsip Digital", padding=str(folder_padding))
         folder_frame.grid(row=2, column=0, sticky=(tk.W, tk.E), pady=(0, 20))
         folder_frame.columnconfigure(0, weight=1)
         
-        # Info label
+        # Info label dengan wraplength responsif
+        wrap_length = 500 if screen_width >= 1366 else 400 if screen_width >= 1024 else 350
         info_label = ttk.Label(
             folder_frame,
             text="Folder ini akan digunakan sebagai default saat membuka form lain",
             font=("Arial", 9),
             foreground="gray",
-            wraplength=500
+            wraplength=wrap_length
         )
         info_label.grid(row=0, column=0, sticky=(tk.W, tk.E), pady=(0, 10))
         
@@ -429,7 +499,7 @@ class SettingsApp:
             folder_frame, 
             textvariable=self.folder_var,
             foreground="blue" if current_default else "gray",
-            wraplength=500,
+            wraplength=wrap_length,
             font=("Arial", 9, "bold" if current_default else "normal")
         )
         folder_path_label.grid(row=1, column=0, sticky=(tk.W, tk.E), pady=(0, 15))
@@ -455,8 +525,8 @@ class SettingsApp:
         clear_btn.grid(row=0, column=1, padx=(10, 0))
         
         # ===== WEB SERVER SECTION =====
-        # Frame untuk Web Server
-        webserver_frame = ttk.LabelFrame(main_frame, text="🌐 Web Server", padding="15")
+        # Frame untuk Web Server dengan padding responsif
+        webserver_frame = ttk.LabelFrame(main_frame, text="🌐 Web Server", padding=str(folder_padding))
         webserver_frame.grid(row=3, column=0, sticky=(tk.W, tk.E), pady=(0, 20))
         webserver_frame.columnconfigure(0, weight=1)
         
@@ -466,7 +536,7 @@ class SettingsApp:
             text="Aktifkan web server untuk akses file arsip melalui browser",
             font=("Arial", 9),
             foreground="gray",
-            wraplength=600
+            wraplength=wrap_length
         )
         webserver_info_label.grid(row=0, column=0, sticky=(tk.W, tk.E), pady=(0, 10))
         
@@ -666,29 +736,34 @@ class SettingsApp:
     
     def start_web_server(self):
         """Start web server"""
-        try:
-            port = int(self.port_var.get())
-            if port < 1024 or port > 65535:
-                messagebox.showerror("Error", "Port harus antara 1024 dan 65535")
-                return
-        except ValueError:
-            messagebox.showerror("Error", "Port harus berupa angka")
+        # cek dulu apakah ada file database.xlsx
+        if not os.path.exists("database.xlsx"):
+            messagebox.showerror("Error", "File database.xlsx tidak ditemukan!\nSilakan scan folder arsip digital terlebih dahulu lalu pilih simpan dan singkron .")
             return
-        
-        # Save port to config
-        config_manager.set_web_server_port(port)
-        
-        success, message = web_server_manager.start_server(port)
-        
-        if success:
-            self.status_var.set("✅ Web server berhasil dijalankan!")
-            messagebox.showinfo("Server Started", message)
-            self.update_server_status()
-            
-            # Clear status after 3 seconds
-            self.root.after(3000, lambda: self.status_var.set(""))
         else:
-            messagebox.showerror("Error", f"Gagal start server:\n{message}")
+            try:
+                port = int(self.port_var.get())
+                if port < 1024 or port > 65535:
+                    messagebox.showerror("Error", "Port harus antara 1024 dan 65535")
+                    return
+            except ValueError:
+                messagebox.showerror("Error", "Port harus berupa angka")
+                return
+            
+            # Save port to config
+            config_manager.set_web_server_port(port)
+            
+            success, message = web_server_manager.start_server(port)
+            
+            if success:
+                self.status_var.set("✅ Web server berhasil dijalankan!")
+                messagebox.showinfo("Server Started", message)
+                self.update_server_status()
+                
+                # Clear status after 3 seconds
+                self.root.after(3000, lambda: self.status_var.set(""))
+            else:
+                messagebox.showerror("Error", f"Gagal start server:\n{message}")
     
     def stop_web_server(self):
         """Stop web server"""
@@ -708,7 +783,7 @@ class SettingsApp:
             messagebox.showerror("Error", f"Gagal stop server:\n{message}")
     
     def browse_default_folder(self):
-        """Pilih folder default"""
+        """Pilih folder default dan auto-generate database"""
         current_default = config_manager.get_default_folder()
         initial_dir = current_default if current_default and os.path.exists(current_default) else os.getcwd()
         
@@ -724,19 +799,180 @@ class SettingsApp:
                     self.folder_var.set(folder_path)
                     self.status_var.set("✅ Folder default berhasil disimpan!")
                     
+                    # Tanyakan apakah user ingin auto-generate database
+                    
                     # Clear status after 3 seconds
                     self.root.after(3000, lambda: self.status_var.set(""))
-                    
-                    messagebox.showinfo(
-                        "Berhasil",
-                        f"Folder default berhasil disimpan!\n\n"
-                        f"Folder: {os.path.basename(folder_path)}\n\n"
-                        f"Folder ini akan digunakan sebagai default di semua form."
-                    )
                 else:
                     messagebox.showerror("Error", "Gagal menyimpan konfigurasi!")
             else:
                 messagebox.showerror("Error", "Folder yang dipilih tidak valid!")
+    
+    def scan_struktur_lengkap_simple(self, root_path, status_label, progress_window):
+        """Scan struktur lengkap sederhana untuk database web"""
+        result = {
+            "success": True,
+            "root_path": root_path,
+            "root_name": os.path.basename(root_path),
+            "scan_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "items": []
+        }
+        
+        try:
+            item_count = 0
+            
+            # Scan semua file dan folder secara rekursif
+            for root, dirs, files in os.walk(root_path):
+                # Update status setiap 10 item
+                if item_count % 10 == 0:
+                    relative_root = os.path.relpath(root, root_path)
+                    status_label.config(text=f"Scanning: {relative_root}...")
+                    progress_window.update()
+                
+                # Scan folders
+                for dir_name in dirs:
+                    dir_path = os.path.join(root, dir_name)
+                    relative_path = os.path.relpath(dir_path, root_path)
+                    
+                    try:
+                        # Hitung ukuran folder (total file di dalamnya)
+                        folder_size = 0
+                        for sub_root, sub_dirs, sub_files in os.walk(dir_path):
+                            for sub_file in sub_files:
+                                try:
+                                    sub_file_path = os.path.join(sub_root, sub_file)
+                                    folder_size += os.path.getsize(sub_file_path)
+                                except:
+                                    pass
+                        
+                        folder_size_mb = round(folder_size / (1024 * 1024), 2)
+                        last_modified = datetime.fromtimestamp(os.path.getmtime(dir_path)).strftime("%Y-%m-%d %H:%M:%S")
+                        
+                        result["items"].append({
+                            'file_path': dir_path,
+                            'relative_path': relative_path,
+                            'status': 'folder',
+                            'ukuran_mb': folder_size_mb,
+                            'last_modified': last_modified,
+                            'scan_time': result["scan_time"],
+                            'file_name': dir_name,
+                            'directory': os.path.dirname(dir_path),
+                            'extension': ''
+                        })
+                        
+                        item_count += 1
+                    
+                    except Exception as e:
+                        print(f"Error scanning folder {dir_path}: {e}")
+                
+                # Scan files
+                for file_name in files:
+                    file_path = os.path.join(root, file_name)
+                    relative_path = os.path.relpath(file_path, root_path)
+                    
+                    try:
+                        file_size = os.path.getsize(file_path)
+                        file_size_mb = round(file_size / (1024 * 1024), 2)
+                        last_modified = datetime.fromtimestamp(os.path.getmtime(file_path)).strftime("%Y-%m-%d %H:%M:%S")
+                        file_extension = os.path.splitext(file_name)[1]
+                        
+                        result["items"].append({
+                            'file_path': file_path,
+                            'relative_path': relative_path,
+                            'status': 'file',
+                            'ukuran_mb': file_size_mb,
+                            'last_modified': last_modified,
+                            'scan_time': result["scan_time"],
+                            'file_name': file_name,
+                            'directory': os.path.dirname(file_path),
+                            'extension': file_extension
+                        })
+                        
+                        item_count += 1
+                    
+                    except Exception as e:
+                        print(f"Error scanning file {file_path}: {e}")
+            
+            result["total_items"] = item_count
+            return result
+            
+        except Exception as e:
+            result["success"] = False
+            result["error"] = str(e)
+            return result
+    
+    def export_simple_database_for_web(self, scan_result, output_path, status_label, progress_window):
+        """Export database sederhana untuk web server"""
+        try:
+            status_label.config(text="Menyimpan ke Excel...")
+            progress_window.update()
+            
+            # Prepare data untuk DataFrame
+            df_data = []
+            for idx, item in enumerate(scan_result["items"], 1):
+                df_data.append({
+                    'ID': idx,
+                    'File_Path': item['file_path'],
+                    'Relative_Path': item['relative_path'],
+                    'Status': item['status'],
+                    'Ukuran_MB': item['ukuran_mb'],
+                    'Last_Modified': item['last_modified'],
+                    'Scan_Time': item['scan_time'],
+                    'File_Name': item['file_name'],
+                    'Directory': item['directory'],
+                    'Extension': item['extension']
+                })
+            
+            df = pd.DataFrame(df_data)
+            
+            # Create summary sheet
+            summary_data = [{
+                'Informasi': 'Folder Root',
+                'Value': scan_result["root_name"]
+            }, {
+                'Informasi': 'Root Path',
+                'Value': scan_result["root_path"]
+            }, {
+                'Informasi': 'Waktu Generate',
+                'Value': scan_result["scan_time"]
+            }, {
+                'Informasi': 'Total Records',
+                'Value': len(scan_result["items"])
+            }, {
+                'Informasi': 'Total Files',
+                'Value': len([item for item in scan_result["items"] if item['status'] == 'file'])
+            }, {
+                'Informasi': 'Total Folders',
+                'Value': len([item for item in scan_result["items"] if item['status'] == 'folder'])
+            }, {
+                'Informasi': 'Total Size (MB)',
+                'Value': round(sum([item['ukuran_mb'] for item in scan_result["items"]]), 2)
+            }, {
+                'Informasi': 'Generated By',
+                'Value': 'Aplikasi Arsip Digital - Auto Database Generator'
+            }, {
+                'Informasi': 'Purpose',
+                'Value': 'Database for Web Server Access'
+            }]
+            
+            df_summary = pd.DataFrame(summary_data)
+            
+            # Export to Excel with multiple sheets
+            with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
+                df.to_excel(writer, sheet_name="Database", index=False)
+                df_summary.to_excel(writer, sheet_name="Summary", index=False)
+            
+            return {
+                "success": True,
+                "file_path": output_path,
+                "total_records": len(df_data)
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e)
+            }
     
     def clear_default_folder(self):
         """Hapus folder default"""
@@ -786,9 +1022,9 @@ class CekPengajuanDanaApp:
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
         
-        # Set responsive window size (90% of screen width, 85% of height)
+        # Set responsive window size (90% of screen width, 90% of height)
         window_width = int(screen_width * 0.9)
-        window_height = int(screen_height * 0.85)
+        window_height = int(screen_height * 0.9)
         
         # Minimum size constraints
         min_width = 1200
@@ -905,7 +1141,7 @@ class CekPengajuanDanaApp:
         
         # Results frame dengan treeview
         results_frame = ttk.LabelFrame(main_frame, text="Hasil Scan", padding="10")
-        results_frame.grid(row=5, column=0, sticky=(tk.W, tk.E, tk.N, tk.S), pady=(0, 15))
+        results_frame.grid(row=2, column=0, sticky=(tk.W, tk.E, tk.N, tk.S), pady=(0, 15))
         results_frame.columnconfigure(0, weight=1)
         results_frame.rowconfigure(0, weight=1)
         
@@ -1462,8 +1698,32 @@ class ArsipDigitalApp:
     def setup_window(self):
         """Setup window utama aplikasi"""
         self.root.title("Aplikasi Arsip Digital - Halaman Awal")
-        self.root.geometry("600x600")
+        
+        # Get screen dimensions for responsive design
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        
+        # Calculate appropriate window size (responsive)
+        if screen_width >= 1920:  # Large screens
+            window_width, window_height = 600, 600
+        elif screen_width >= 1366:  # Medium screens (laptop)
+            window_width, window_height = 580, 580
+        elif screen_width >= 1024:  # Small laptop
+            window_width, window_height = 520, 550
+        else:  # Very small screens
+            window_width, window_height = 480, 500
+        
+        # Ensure window doesn't exceed 85% of screen size
+        max_width = int(screen_width * 0.85)
+        max_height = int(screen_height * 0.85)
+        window_width = min(window_width, max_width)
+        window_height = min(window_height, max_height)
+        
+        self.root.geometry(f"{window_width}x{window_height}")
         self.root.resizable(True, True)
+        
+        # Set minimum size to prevent too small windows
+        self.root.minsize(450, 400)
         
         # Center window
         self.center_window()
@@ -1485,8 +1745,11 @@ class ArsipDigitalApp:
     
     def create_widgets(self):
         """Membuat semua widget GUI"""
-        # Main frame
-        main_frame = ttk.Frame(self.root, padding="20")
+        # Main frame dengan padding responsif
+        screen_width = self.root.winfo_screenwidth()
+        padding_size = 20 if screen_width >= 1366 else 15 if screen_width >= 1024 else 12
+        
+        main_frame = ttk.Frame(self.root, padding=str(padding_size))
         main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         
         # Configure grid weights
@@ -1494,34 +1757,38 @@ class ArsipDigitalApp:
         self.root.rowconfigure(0, weight=1)
         main_frame.columnconfigure(0, weight=1)
         
-        # Title
+        # Title dengan ukuran font responsif
+        title_size = 16 if screen_width >= 1366 else 14 if screen_width >= 1024 else 12
         title_label = ttk.Label(
             main_frame, 
             text="CEK ARSIP DIGITAL", 
-            font=("Arial", 16, "bold")
+            font=("Arial", title_size, "bold")
         )
         title_label.grid(row=0, column=0, pady=(0, 30))
         
         # Subtitle
+        subtitle_size = 10 if screen_width >= 1366 else 9 if screen_width >= 1024 else 8
         subtitle_label = ttk.Label(
             main_frame, 
             text="Cocokkan data folder dengan database Excel anggota",
-            font=("Arial", 10)
+            font=("Arial", subtitle_size)
         )
         subtitle_label.grid(row=1, column=0, pady=(0, 20))
         
-        # Frame untuk folder selection
-        folder_frame = ttk.LabelFrame(main_frame, text="Pilih Folder Data Anggota", padding="15")
+        # Frame untuk folder selection dengan padding responsif
+        frame_padding = 15 if screen_width >= 1366 else 12 if screen_width >= 1024 else 10
+        folder_frame = ttk.LabelFrame(main_frame, text="Pilih Folder Data Anggota", padding=str(frame_padding))
         folder_frame.grid(row=2, column=0, sticky=(tk.W, tk.E), pady=(0, 15))
         folder_frame.columnconfigure(0, weight=1)
         
-        # Folder path display
+        # Folder path display dengan wraplength responsif
+        wrap_length = 500 if screen_width >= 1366 else 400 if screen_width >= 1024 else 350
         self.folder_var = tk.StringVar(value="Belum ada folder yang dipilih...")
         folder_path_label = ttk.Label(
             folder_frame, 
             textvariable=self.folder_var,
             foreground="gray",
-            wraplength=500
+            wraplength=wrap_length
         )
         folder_path_label.grid(row=0, column=0, sticky=(tk.W, tk.E), pady=(0, 10))
         
@@ -2788,8 +3055,21 @@ class ScanFolderApp:
     def setup_window(self):
         """Setup window utama"""
         self.root.title("Scan Folder Arsip Digital - Owncloud")
-        self.root.geometry("700x650")
+        
+        # Get screen dimensions
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        
+        # Get responsive dimensions
+        width, height, self.padding, self.fonts = get_responsive_dimensions(
+            700, 650, screen_width, screen_height
+        )
+        
+        self.root.geometry(f"{width}x{height}")
         self.root.resizable(True, True)
+        
+        # Set minimum size
+        self.root.minsize(550, 500)
         
         # Center window
         self.center_window()
@@ -2805,8 +3085,8 @@ class ScanFolderApp:
     
     def create_widgets(self):
         """Membuat semua widget GUI"""
-        # Main frame
-        main_frame = ttk.Frame(self.root, padding="20")
+        # Main frame dengan padding responsif
+        main_frame = ttk.Frame(self.root, padding=str(self.padding))
         main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         
         # Configure grid weights
@@ -2815,11 +3095,11 @@ class ScanFolderApp:
         main_frame.columnconfigure(0, weight=1)
         main_frame.rowconfigure(2, weight=1)
         
-        # Title
+        # Title dengan font responsif
         title_label = ttk.Label(
             main_frame, 
             text="📂 SCAN FOLDER ARSIP DIGITAL", 
-            font=("Arial", 16, "bold")
+            font=("Arial", self.fonts['title'], "bold")
         )
         title_label.grid(row=0, column=0, pady=(0, 10))
         
@@ -2827,23 +3107,25 @@ class ScanFolderApp:
         subtitle_label = ttk.Label(
             main_frame, 
             text="Scan folder arsip digital dari Owncloud",
-            font=("Arial", 10),
+            font=("Arial", self.fonts['subtitle']),
             foreground="gray"
         )
         subtitle_label.grid(row=1, column=0, pady=(0, 20))
         
-        # Control frame
-        control_frame = ttk.LabelFrame(main_frame, text="Pilih Folder Arsip", padding="15")
+        # Control frame dengan padding responsif
+        frame_padding = max(10, self.padding - 5)
+        control_frame = ttk.LabelFrame(main_frame, text="Pilih Folder Arsip", padding=str(frame_padding))
         control_frame.grid(row=2, column=0, sticky=(tk.W, tk.E), pady=(0, 15))
         control_frame.columnconfigure(0, weight=1)
         
-        # Path display
+        # Path display dengan wraplength responsif
+        wrap_length = max(400, min(800, int(self.root.winfo_screenwidth() * 0.6)))
         self.path_var = tk.StringVar(value="Belum ada folder yang dipilih...")
         path_label = ttk.Label(
             control_frame, 
             textvariable=self.path_var,
             foreground="gray",
-            wraplength=600
+            wraplength=wrap_length
         )
         path_label.grid(row=0, column=0, sticky=(tk.W, tk.E), pady=(0, 15))
         
@@ -2910,7 +3192,7 @@ class ScanFolderApp:
         # Export Struktur Lengkap button
         self.export_struktur_btn = ttk.Button(
             button_frame, 
-            text="📋 Export Struktur Lengkap", 
+            text="📋 Simpan Dan Singkron", 
             command=self.export_struktur_lengkap,
             state="disabled"
         )
@@ -3483,74 +3765,76 @@ class ScanFolderApp:
         return formatted_parts
     
     def export_struktur_lengkap(self):
-        """Export struktur lengkap per sheet dengan breakdown hingga file"""
         if not self.selected_folder:
             messagebox.showwarning("Peringatan", "Silakan pilih folder terlebih dahulu!")
             return
-        
+
         try:
-            # Progress dialog
+            # === Progress dialog ===
             progress_window = tk.Toplevel(self.root)
             progress_window.title("Membuat Struktur Lengkap...")
             progress_window.geometry("400x100")
             progress_window.resizable(False, False)
-            
             progress_window.update_idletasks()
             x = (progress_window.winfo_screenwidth() // 2) - 200
             y = (progress_window.winfo_screenheight() // 2) - 50
             progress_window.geometry(f'400x100+{x}+{y}')
-            
             progress_window.transient(self.root)
             progress_window.grab_set()
-            
+
             frame = ttk.Frame(progress_window, padding="20")
             frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
-            
             ttk.Label(frame, text="Sedang membuat struktur lengkap...", font=("Arial", 10)).grid(row=0, column=0, pady=(0, 10))
-            
             progress_bar = ttk.Progressbar(frame, mode='indeterminate')
             progress_bar.grid(row=1, column=0, sticky=(tk.W, tk.E))
             progress_bar.start()
-            
             progress_window.update()
-            
-            # Scan struktur lengkap dengan file
+
+            # === Scan struktur lengkap dengan file ===
             result = self.scan_struktur_lengkap(self.selected_folder)
-            
+
             progress_window.destroy()
-            
+
             if result["success"]:
-                # Dialog save file
-                default_filename = f"struktur_lengkap_{os.path.basename(self.selected_folder)}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
-                
-                file_path = filedialog.asksaveasfilename(
-                    title="Simpan Struktur Lengkap",
-                    defaultextension=".xlsx",
-                    initialfile=default_filename,
-                    initialdir=self.selected_folder,
-                    filetypes=[("Excel Files", "*.xlsx")]
-                )
-                
-                if file_path:
-                    export_result = self.export_struktur_to_excel(result, file_path)
-                    
-                    if export_result["success"]:
+                # === Tahap 1: Buat database.xlsx terlebih dahulu di folder yang dipilih ===
+                temp_path = "database.xlsx"
+                export_result = self.export_struktur_to_excel(result, temp_path)
+
+                if export_result["success"]:
+                    # === Tahap 2: Setelah selesai, baru dialog Save As ===
+                    default_filename = f"struktur_lengkap_{os.path.basename(self.selected_folder)}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+                    file_path = filedialog.asksaveasfilename(
+                        title="Simpan Struktur Lengkap",
+                        defaultextension=".xlsx",
+                        initialfile=default_filename,
+                        initialdir=self.selected_folder,
+                        filetypes=[("Excel Files", "*.xlsx")]
+                    )
+
+                    if file_path:
+                        # Salin hasil ke lokasi pilihan user
+                        import shutil
+                        shutil.copy2(temp_path, file_path)
+
                         messagebox.showinfo(
                             "Export Berhasil",
                             f"Struktur lengkap berhasil disimpan!\n\n"
-                            f"File: {export_result['file_path']}\n"
+                            f"File: {file_path}\n"
                             f"Total Sheet: {export_result['total_sheets']}"
                         )
-                    else:
-                        messagebox.showerror("Export Gagal", f"Gagal menyimpan file:\n{export_result.get('error', 'Unknown error')}")
+
+
+                else:
+                    messagebox.showerror("Export Gagal", f"Gagal menyimpan file sementara:\n{export_result.get('error', 'Unknown error')}")
+
             else:
                 messagebox.showerror("Error", f"Gagal scan struktur:\n{result.get('error', 'Unknown error')}")
-                
+
         except Exception as e:
             if 'progress_window' in locals():
                 progress_window.destroy()
             messagebox.showerror("Error", f"Terjadi kesalahan:\n{str(e)}")
-    
+
     def scan_struktur_lengkap(self, root_path):
         """Scan struktur lengkap termasuk file"""
         result = {
@@ -4499,8 +4783,21 @@ class ScanAnggotaApp:
     def setup_window(self):
         """Setup window utama untuk scan anggota"""
         self.root.title("Scan Folder Anggota - Aplikasi Arsip Digital")
-        self.root.geometry("800x600")
+        
+        # Get screen dimensions
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        
+        # Get responsive dimensions
+        width, height, self.padding, self.fonts = get_responsive_dimensions(
+            800, 600, screen_width, screen_height
+        )
+        
+        self.root.geometry(f"{width}x{height}")
         self.root.resizable(True, True)
+        
+        # Set minimum size
+        self.root.minsize(600, 500)
         
         # Center window
         self.center_window()
@@ -4516,8 +4813,8 @@ class ScanAnggotaApp:
     
     def create_widgets(self):
         """Membuat semua widget GUI"""
-        # Main frame
-        main_frame = ttk.Frame(self.root, padding="20")
+        # Main frame dengan padding responsif
+        main_frame = ttk.Frame(self.root, padding=str(self.padding))
         main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         
         # Configure grid weights
@@ -4526,11 +4823,11 @@ class ScanAnggotaApp:
         main_frame.columnconfigure(0, weight=1)
         main_frame.rowconfigure(2, weight=1)
         
-        # Title
+        # Title dengan font responsif
         title_label = ttk.Label(
             main_frame, 
             text="📂 SCAN FOLDER ANGGOTA", 
-            font=("Arial", 16, "bold")
+            font=("Arial", self.fonts['title'], "bold")
         )
         title_label.grid(row=0, column=0, pady=(0, 20))
         
@@ -4538,22 +4835,25 @@ class ScanAnggotaApp:
         subtitle_label = ttk.Label(
             main_frame, 
             text="Scan struktur folder anggota dengan pola: Center(4digit) → Anggota(6digit_nama) → File(01-12)",
-            font=("Arial", 10)
+            font=("Arial", self.fonts['subtitle']),
+            wraplength=max(500, int(self.root.winfo_screenwidth() * 0.6))
         )
         subtitle_label.grid(row=1, column=0, pady=(0, 20))
         
-        # Control frame
-        control_frame = ttk.LabelFrame(main_frame, text="Pilih Folder untuk di-Scan", padding="15")
+        # Control frame dengan padding responsif
+        frame_padding = max(10, self.padding - 5)
+        control_frame = ttk.LabelFrame(main_frame, text="Pilih Folder untuk di-Scan", padding=str(frame_padding))
         control_frame.grid(row=2, column=0, sticky=(tk.W, tk.E), pady=(0, 15))
         control_frame.columnconfigure(0, weight=1)
         
-        # Path display
+        # Path display dengan wraplength responsif
+        wrap_length = max(500, int(self.root.winfo_screenwidth() * 0.65))
         self.path_var = tk.StringVar(value="Belum ada folder yang dipilih...")
         path_label = ttk.Label(
             control_frame, 
             textvariable=self.path_var,
             foreground="gray",
-            wraplength=700
+            wraplength=wrap_length
         )
         path_label.grid(row=0, column=0, sticky=(tk.W, tk.E), pady=(0, 15))
         
@@ -4874,6 +5174,795 @@ class ScanAnggotaApp:
                 self.root.destroy()
 
 
+class UniversalScanApp:
+    """Form untuk Universal Scan - Menscan seluruh folder dan file yang dipilih"""
+    
+    def __init__(self, root, parent_window=None):
+        self.root = root
+        self.parent_window = parent_window
+        
+        # Initialize variables
+        self.selected_folder = ""
+        self.scan_results = []
+        self.database_file = "universal_scan_database.xlsx"
+        
+        self.setup_window()
+        self.create_widgets()
+        self.load_existing_database()
+    
+    def setup_window(self):
+        """Setup window utama untuk universal scan"""
+        self.root.title("Universal Scan - Database Folder & File")
+        
+        # Get screen dimensions
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        
+        # Get responsive dimensions
+        width, height, self.padding, self.fonts = get_responsive_dimensions(
+            1000, 800, screen_width, screen_height
+        )
+        
+        self.root.geometry(f"{width}x{height}")
+        self.root.resizable(True, True)
+        
+        # Set minimum size to prevent too small windows
+        self.root.minsize(700, 600)
+        
+        # Center window
+        self.center_window()
+    
+    def center_window(self):
+        """Center window di layar"""
+        self.root.update_idletasks()
+        width = self.root.winfo_width()
+        height = self.root.winfo_height()
+        x = (self.root.winfo_screenwidth() // 2) - (width // 2)
+        y = (self.root.winfo_screenheight() // 2) - (height // 2)
+        self.root.geometry(f'{width}x{height}+{x}+{y}')
+    
+    def create_widgets(self):
+        """Membuat widget untuk universal scan"""
+        # Main frame dengan padding responsif
+        main_frame = ttk.Frame(self.root, padding=str(self.padding))
+        main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        
+        # Configure grid weights
+        self.root.columnconfigure(0, weight=1)
+        self.root.rowconfigure(0, weight=1)
+        main_frame.columnconfigure(0, weight=1)
+        main_frame.rowconfigure(5, weight=1)  # Row untuk treeview
+        
+        # Title dengan ukuran font responsif
+        title_label = ttk.Label(
+            main_frame, 
+            text="🗄️ UNIVERSAL SCAN DATABASE", 
+            font=("Arial", self.fonts['title'], "bold")
+        )
+        title_label.grid(row=0, column=0, pady=(0, 10))
+        
+        # Subtitle
+        subtitle_label = ttk.Label(
+            main_frame, 
+            text="Scan seluruh folder dan file untuk dijadikan database Excel dengan synchronize",
+            font=("Arial", self.fonts['subtitle']),
+            foreground="gray"
+        )
+        subtitle_label.grid(row=1, column=0, pady=(0, 20))
+        
+        # Database info frame
+        db_frame = ttk.LabelFrame(main_frame, text="📊 Database Info", padding=str(self.padding-5))
+        db_frame.grid(row=2, column=0, sticky=(tk.W, tk.E), pady=(0, 15))
+        db_frame.columnconfigure(1, weight=1)
+        
+        # Database file path
+        ttk.Label(db_frame, text="Database File:", font=("Arial", self.fonts['normal'], "bold")).grid(row=0, column=0, sticky=tk.W, padx=(0, 10))
+        self.db_file_var = tk.StringVar(value=self.database_file)
+        ttk.Label(db_frame, textvariable=self.db_file_var, foreground="blue", font=("Arial", self.fonts['normal'])).grid(row=0, column=1, sticky=tk.W)
+        
+        # Record count
+        ttk.Label(db_frame, text="Total Records:", font=("Arial", self.fonts['normal'], "bold")).grid(row=1, column=0, sticky=tk.W, padx=(0, 10))
+        self.record_count_var = tk.StringVar(value="0")
+        ttk.Label(db_frame, textvariable=self.record_count_var, foreground="green", font=("Arial", self.fonts['normal'])).grid(row=1, column=1, sticky=tk.W)
+        
+        # Folder selection frame dengan padding responsif
+        folder_frame = ttk.LabelFrame(main_frame, text="📂 Pilih Folder untuk Discan", padding=str(self.padding-5))
+        folder_frame.grid(row=3, column=0, sticky=(tk.W, tk.E), pady=(0, 15))
+        folder_frame.columnconfigure(0, weight=1)
+        
+        # Folder path display dengan wraplength responsif
+        wrap_length = max(400, int(self.root.winfo_width() * 0.7)) if hasattr(self, 'root') else 500
+        
+        self.folder_var = tk.StringVar(value="Belum ada folder yang dipilih...")
+        folder_path_label = ttk.Label(
+            folder_frame, 
+            textvariable=self.folder_var,
+            foreground="gray",
+            wraplength=wrap_length,
+            font=("Arial", self.fonts['normal'])
+        )
+        folder_path_label.grid(row=0, column=0, sticky=(tk.W, tk.E), pady=(0, 10))
+        
+        # Buttons frame
+        btn_frame = ttk.Frame(folder_frame)
+        btn_frame.grid(row=1, column=0)
+        
+        # Browse folder button
+        browse_btn = ttk.Button(
+            btn_frame, 
+            text="📂 Pilih Folder", 
+            command=self.browse_folder,
+            style="Accent.TButton"
+        )
+        browse_btn.grid(row=0, column=0, padx=(0, 10))
+        
+        # Scan button
+        self.scan_btn = ttk.Button(
+            btn_frame, 
+            text="🔍 Scan & Update Database", 
+            command=self.scan_and_update_database,
+            state=tk.DISABLED
+        )
+        self.scan_btn.grid(row=0, column=1, padx=(10, 10))
+        
+        # Synchronize button
+        self.sync_btn = ttk.Button(
+            btn_frame, 
+            text="🔄 Synchronize Database", 
+            command=self.synchronize_database,
+            state=tk.DISABLED
+        )
+        self.sync_btn.grid(row=0, column=2, padx=(10, 10))
+        
+        # Export button
+        self.export_btn = ttk.Button(
+            btn_frame, 
+            text="📊 Export Database", 
+            command=self.export_database
+        )
+        self.export_btn.grid(row=0, column=3, padx=(10, 0))
+        
+        # Status info frame
+        status_frame = ttk.Frame(main_frame)
+        status_frame.grid(row=4, column=0, sticky=(tk.W, tk.E), pady=(10, 10))
+        
+        self.status_var = tk.StringVar(value="Database siap digunakan")
+        status_label = ttk.Label(
+            status_frame,
+            textvariable=self.status_var,
+            font=("Arial", self.fonts['normal']),
+            foreground="blue"
+        )
+        status_label.grid(row=0, column=0, sticky=tk.W)
+        
+        # Results frame dengan treeview
+        results_frame = ttk.LabelFrame(main_frame, text="📋 Database Records", padding=str(self.padding-5))
+        results_frame.grid(row=5, column=0, sticky=(tk.W, tk.E, tk.N, tk.S), pady=(0, 15))
+        results_frame.columnconfigure(0, weight=1)
+        results_frame.rowconfigure(0, weight=1)
+        
+        # Create scrollbars
+        tree_scroll_y = ttk.Scrollbar(results_frame, orient=tk.VERTICAL)
+        tree_scroll_y.grid(row=0, column=1, sticky=(tk.N, tk.S))
+        
+        tree_scroll_x = ttk.Scrollbar(results_frame, orient=tk.HORIZONTAL)
+        tree_scroll_x.grid(row=1, column=0, sticky=(tk.W, tk.E))
+        
+        # Treeview
+        self.tree = ttk.Treeview(
+            results_frame,
+            columns=("ID", "File_Path", "Status", "Ukuran_MB", "Last_Modified", "Scan_Time"),
+            show="headings",
+            yscrollcommand=tree_scroll_y.set,
+            xscrollcommand=tree_scroll_x.set
+        )
+        tree_scroll_y.config(command=self.tree.yview)
+        tree_scroll_x.config(command=self.tree.xview)
+        
+        # Define columns dengan ukuran responsif
+        self.tree.heading("ID", text="ID")
+        self.tree.heading("File_Path", text="File Path")
+        self.tree.heading("Status", text="Status")
+        self.tree.heading("Ukuran_MB", text="Ukuran (MB)")
+        self.tree.heading("Last_Modified", text="Last Modified")
+        self.tree.heading("Scan_Time", text="Scan Time")
+        
+        # Set column widths
+        self.tree.column("ID", width=60, anchor=tk.CENTER)
+        self.tree.column("File_Path", width=400, anchor=tk.W)
+        self.tree.column("Status", width=80, anchor=tk.CENTER)
+        self.tree.column("Ukuran_MB", width=100, anchor=tk.E)
+        self.tree.column("Last_Modified", width=150, anchor=tk.CENTER)
+        self.tree.column("Scan_Time", width=150, anchor=tk.CENTER)
+        
+        self.tree.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        
+        # Bind double-click to open file/folder
+        self.tree.bind("<Double-Button-1>", self.open_selected_item)
+        
+        # Footer buttons
+        footer_frame = ttk.Frame(main_frame)
+        footer_frame.grid(row=6, column=0, pady=(10, 0))
+        
+        # Clear database button
+        clear_btn = ttk.Button(
+            footer_frame, 
+            text="🗑️ Clear Database", 
+            command=self.clear_database
+        )
+        clear_btn.grid(row=0, column=0, padx=(0, 10))
+        
+        # Refresh view button
+        refresh_btn = ttk.Button(
+            footer_frame, 
+            text="🔄 Refresh View", 
+            command=self.refresh_treeview
+        )
+        refresh_btn.grid(row=0, column=1, padx=(10, 10))
+        
+        # Back button
+        if self.parent_window:
+            back_btn = ttk.Button(
+                footer_frame, 
+                text="⬅️ Kembali ke Menu", 
+                command=self.back_to_menu
+            )
+            back_btn.grid(row=0, column=2, padx=(10, 0))
+    
+    def load_existing_database(self):
+        """Load database yang sudah ada jika tersedia"""
+        if os.path.exists(self.database_file):
+            try:
+                df = pd.read_excel(self.database_file)
+                self.scan_results = df.to_dict('records')
+                self.record_count_var.set(str(len(self.scan_results)))
+                self.status_var.set(f"✅ Database loaded: {len(self.scan_results)} records")
+                self.refresh_treeview()
+                
+                # Enable synchronize button if there are records
+                if self.scan_results:
+                    self.sync_btn.config(state=tk.NORMAL)
+                    
+            except Exception as e:
+                self.status_var.set(f"⚠️ Error loading database: {str(e)}")
+        else:
+            self.status_var.set("📋 Database baru akan dibuat saat scan pertama")
+    
+    def browse_folder(self):
+        """Fungsi untuk memilih folder"""
+        # Gunakan default folder jika ada
+        default_folder = config_manager.get_default_folder()
+        initial_dir = default_folder if default_folder and os.path.exists(default_folder) else os.getcwd()
+        
+        folder_path = filedialog.askdirectory(
+            title="Pilih Folder untuk Universal Scan",
+            initialdir=initial_dir
+        )
+        
+        if folder_path:
+            self.selected_folder = folder_path
+            self.folder_var.set(folder_path)
+            self.scan_btn.config(state=tk.NORMAL)
+            self.status_var.set(f"📂 Folder dipilih: {os.path.basename(folder_path)}")
+    
+    def scan_and_update_database(self):
+        """Scan folder dan update database"""
+        if not self.selected_folder:
+            messagebox.showwarning("Peringatan", "Silakan pilih folder terlebih dahulu!")
+            return
+        
+        # Konfirmasi
+        result = messagebox.askyesno(
+            "Konfirmasi Scan",
+            f"Akan melakukan scan pada folder:\n{self.selected_folder}\n\n"
+            f"Proses ini akan:\n"
+            f"• Scan semua folder dan file\n"
+            f"• Update database dengan data terbaru\n"
+            f"• Menambahkan record baru\n"
+            f"• Update status file yang sudah ada\n\n"
+            f"Lanjutkan?"
+        )
+        
+        if not result:
+            return
+        
+        # Progress dialog
+        progress_window = tk.Toplevel(self.root)
+        progress_window.title("Scanning...")
+        progress_window.geometry("500x200")
+        progress_window.resizable(False, False)
+        
+        # Center progress window
+        progress_window.update_idletasks()
+        x = (progress_window.winfo_screenwidth() // 2) - 250
+        y = (progress_window.winfo_screenheight() // 2) - 100
+        progress_window.geometry(f'500x200+{x}+{y}')
+        
+        progress_window.transient(self.root)
+        progress_window.grab_set()
+        
+        # Progress content
+        progress_frame = ttk.Frame(progress_window, padding="20")
+        progress_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        
+        progress_label = ttk.Label(
+            progress_frame, 
+            text="Scanning folder dan file...",
+            font=("Arial", 12, "bold")
+        )
+        progress_label.grid(row=0, column=0, pady=(0, 10))
+        
+        self.progress_var = tk.DoubleVar()
+        progress_bar = ttk.Progressbar(
+            progress_frame, 
+            mode='indeterminate'
+        )
+        progress_bar.grid(row=1, column=0, sticky=(tk.W, tk.E), pady=(0, 10))
+        progress_bar.start(10)
+        
+        status_label = ttk.Label(
+            progress_frame,
+            text="Memulai scan...",
+            font=("Arial", 9),
+            foreground="gray"
+        )
+        status_label.grid(row=2, column=0, pady=(10, 0))
+        
+        progress_window.update()
+        
+        # Lakukan scan
+        try:
+            new_records = []
+            updated_count = 0
+            new_count = 0
+            scan_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            
+            # Create lookup untuk existing records
+            existing_paths = {record['file_path']: record for record in self.scan_results}
+            
+            # Scan folder secara rekursif
+            for root, dirs, files in os.walk(self.selected_folder):
+                # Update progress status
+                status_label.config(text=f"Scanning: {os.path.basename(root)}...")
+                progress_window.update()
+                
+                # Scan folders
+                for dir_name in dirs:
+                    dir_path = os.path.join(root, dir_name)
+                    relative_path = os.path.relpath(dir_path, self.selected_folder)
+                    
+                    try:
+                        dir_size = self.get_folder_size(dir_path)
+                        dir_size_mb = round(dir_size / (1024 * 1024), 2)
+                        last_modified = datetime.fromtimestamp(os.path.getmtime(dir_path)).strftime("%Y-%m-%d %H:%M:%S")
+                        
+                        record = {
+                            'file_path': dir_path,
+                            'status': 'folder',
+                            'ukuran_mb': dir_size_mb,
+                            'last_modified': last_modified,
+                            'scan_time': scan_time,
+                            'relative_path': relative_path
+                        }
+                        
+                        # Check if already exists
+                        if dir_path in existing_paths:
+                            # Update existing record
+                            existing_record = existing_paths[dir_path]
+                            if (existing_record['last_modified'] != last_modified or 
+                                existing_record['ukuran_mb'] != dir_size_mb):
+                                existing_record.update(record)
+                                updated_count += 1
+                        else:
+                            # New record
+                            new_records.append(record)
+                            new_count += 1
+                    
+                    except Exception as e:
+                        print(f"Error scanning folder {dir_path}: {e}")
+                
+                # Scan files
+                for file_name in files:
+                    file_path = os.path.join(root, file_name)
+                    relative_path = os.path.relpath(file_path, self.selected_folder)
+                    
+                    try:
+                        file_size = os.path.getsize(file_path)
+                        file_size_mb = round(file_size / (1024 * 1024), 2)
+                        last_modified = datetime.fromtimestamp(os.path.getmtime(file_path)).strftime("%Y-%m-%d %H:%M:%S")
+                        
+                        record = {
+                            'file_path': file_path,
+                            'status': 'file',
+                            'ukuran_mb': file_size_mb,
+                            'last_modified': last_modified,
+                            'scan_time': scan_time,
+                            'relative_path': relative_path
+                        }
+                        
+                        # Check if already exists
+                        if file_path in existing_paths:
+                            # Update existing record
+                            existing_record = existing_paths[file_path]
+                            if (existing_record['last_modified'] != last_modified or 
+                                existing_record['ukuran_mb'] != file_size_mb):
+                                existing_record.update(record)
+                                updated_count += 1
+                        else:
+                            # New record
+                            new_records.append(record)
+                            new_count += 1
+                    
+                    except Exception as e:
+                        print(f"Error scanning file {file_path}: {e}")
+            
+            # Add new records to scan_results
+            self.scan_results.extend(new_records)
+            
+            # Save to database
+            self.save_database()
+            
+            progress_window.destroy()
+            
+            # Update UI
+            self.record_count_var.set(str(len(self.scan_results)))
+            self.status_var.set(f"✅ Scan selesai: {new_count} baru, {updated_count} updated")
+            self.refresh_treeview()
+            self.sync_btn.config(state=tk.NORMAL)
+            
+            # Show result
+            messagebox.showinfo(
+                "Scan Selesai",
+                f"Scan berhasil diselesaikan!\n\n"
+                f"📊 Statistik:\n"
+                f"• Record baru: {new_count}\n"
+                f"• Record di-update: {updated_count}\n"
+                f"• Total record: {len(self.scan_results)}\n\n"
+                f"💾 Database disimpan di: {self.database_file}"
+            )
+        
+        except Exception as e:
+            progress_window.destroy()
+            messagebox.showerror("Error", f"Terjadi error saat scanning:\n{str(e)}")
+            self.status_var.set(f"❌ Error: {str(e)}")
+    
+    def get_folder_size(self, folder_path):
+        """Hitung ukuran total folder"""
+        total_size = 0
+        try:
+            for root, dirs, files in os.walk(folder_path):
+                for file in files:
+                    try:
+                        file_path = os.path.join(root, file)
+                        total_size += os.path.getsize(file_path)
+                    except (OSError, FileNotFoundError):
+                        pass
+        except:
+            pass
+        return total_size
+    
+    def synchronize_database(self):
+        """Synchronize database dengan kondisi file saat ini"""
+        if not self.scan_results:
+            messagebox.showwarning("Peringatan", "Tidak ada data untuk disynchronize!")
+            return
+        
+        result = messagebox.askyesno(
+            "Konfirmasi Synchronize",
+            f"Akan melakukan synchronize database dengan kondisi file saat ini.\n\n"
+            f"Proses ini akan:\n"
+            f"• Cek keberadaan semua file/folder dalam database\n"
+            f"• Update status file yang sudah tidak ada\n"
+            f"• Update ukuran dan tanggal modifikasi\n"
+            f"• Tandai file yang hilang/moved\n\n"
+            f"Total records: {len(self.scan_results)}\n\n"
+            f"Lanjutkan?"
+        )
+        
+        if not result:
+            return
+        
+        # Progress dialog
+        progress_window = tk.Toplevel(self.root)
+        progress_window.title("Synchronizing...")
+        progress_window.geometry("450x150")
+        progress_window.resizable(False, False)
+        
+        # Center progress window
+        progress_window.update_idletasks()
+        x = (progress_window.winfo_screenwidth() // 2) - 225
+        y = (progress_window.winfo_screenheight() // 2) - 75
+        progress_window.geometry(f'450x150+{x}+{y}')
+        
+        progress_window.transient(self.root)
+        progress_window.grab_set()
+        
+        # Progress content
+        progress_frame = ttk.Frame(progress_window, padding="20")
+        progress_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        
+        progress_label = ttk.Label(
+            progress_frame, 
+            text="Synchronizing database...",
+            font=("Arial", 10, "bold")
+        )
+        progress_label.grid(row=0, column=0, pady=(0, 10))
+        
+        progress_bar = ttk.Progressbar(
+            progress_frame, 
+            mode='determinate',
+            maximum=len(self.scan_results)
+        )
+        progress_bar.grid(row=1, column=0, sticky=(tk.W, tk.E), pady=(0, 10))
+        
+        status_label = ttk.Label(
+            progress_frame,
+            text="",
+            font=("Arial", 8),
+            foreground="gray"
+        )
+        status_label.grid(row=2, column=0, pady=(5, 0))
+        
+        progress_window.update()
+        
+        # Synchronize
+        try:
+            updated_count = 0
+            missing_count = 0
+            sync_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            
+            for idx, record in enumerate(self.scan_results):
+                progress_bar['value'] = idx + 1
+                file_path = record['file_path']
+                status_label.config(text=f"Checking: {os.path.basename(file_path)}")
+                progress_window.update()
+                
+                if os.path.exists(file_path):
+                    # File/folder exists - update info
+                    try:
+                        if record['status'] == 'folder':
+                            new_size = self.get_folder_size(file_path)
+                        else:
+                            new_size = os.path.getsize(file_path)
+                        
+                        new_size_mb = round(new_size / (1024 * 1024), 2)
+                        new_modified = datetime.fromtimestamp(os.path.getmtime(file_path)).strftime("%Y-%m-%d %H:%M:%S")
+                        
+                        # Update if changed
+                        if (record['ukuran_mb'] != new_size_mb or 
+                            record['last_modified'] != new_modified):
+                            record['ukuran_mb'] = new_size_mb
+                            record['last_modified'] = new_modified
+                            record['scan_time'] = sync_time
+                            updated_count += 1
+                        
+                        # Ensure status is not missing
+                        if record.get('status_sync') == 'MISSING':
+                            record['status_sync'] = 'EXISTS'
+                            updated_count += 1
+                    
+                    except Exception as e:
+                        print(f"Error updating {file_path}: {e}")
+                else:
+                    # File/folder missing
+                    if record.get('status_sync') != 'MISSING':
+                        record['status_sync'] = 'MISSING'
+                        record['scan_time'] = sync_time
+                        missing_count += 1
+            
+            # Save database
+            self.save_database()
+            
+            progress_window.destroy()
+            
+            # Update UI
+            self.status_var.set(f"🔄 Sync selesai: {updated_count} updated, {missing_count} missing")
+            self.refresh_treeview()
+            
+            # Show result
+            messagebox.showinfo(
+                "Synchronize Selesai",
+                f"Database berhasil di-synchronize!\n\n"
+                f"📊 Statistik:\n"
+                f"• Record di-update: {updated_count}\n"
+                f"• File/folder hilang: {missing_count}\n"
+                f"• Total record: {len(self.scan_results)}\n\n"
+                f"💾 Database disimpan di: {self.database_file}"
+            )
+        
+        except Exception as e:
+            progress_window.destroy()
+            messagebox.showerror("Error", f"Terjadi error saat synchronize:\n{str(e)}")
+    
+    def save_database(self):
+        """Simpan database ke Excel"""
+        try:
+            if self.scan_results:
+                # Prepare data untuk DataFrame
+                df_data = []
+                for idx, record in enumerate(self.scan_results, 1):
+                    df_data.append({
+                        'ID': idx,
+                        'File_Path': record['file_path'],
+                        'Status': record['status'],
+                        'Ukuran_MB': record['ukuran_mb'],
+                        'Last_Modified': record['last_modified'],
+                        'Scan_Time': record['scan_time'],
+                        'Relative_Path': record.get('relative_path', ''),
+                        'Status_Sync': record.get('status_sync', 'EXISTS')
+                    })
+                
+                df = pd.DataFrame(df_data)
+                df.to_excel(self.database_file, index=False, sheet_name="Universal_Scan_DB")
+        
+        except Exception as e:
+            messagebox.showerror("Error", f"Gagal menyimpan database:\n{str(e)}")
+    
+    def export_database(self):
+        """Export database ke lokasi lain"""
+        if not self.scan_results:
+            messagebox.showwarning("Peringatan", "Tidak ada data untuk di-export!")
+            return
+        
+        file_path = filedialog.asksaveasfilename(
+            title="Export Universal Scan Database",
+            defaultextension=".xlsx",
+            initialfile=f"universal_scan_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+            filetypes=[
+                ("Excel Files", "*.xlsx"),
+                ("All Files", "*.*")
+            ]
+        )
+        
+        if file_path:
+            try:
+                # Prepare data dengan format yang lebih detail
+                df_data = []
+                for idx, record in enumerate(self.scan_results, 1):
+                    df_data.append({
+                        'ID': idx,
+                        'File_Path': record['file_path'],
+                        'Status': record['status'],
+                        'Ukuran_MB': record['ukuran_mb'],
+                        'Last_Modified': record['last_modified'],
+                        'Scan_Time': record['scan_time'],
+                        'Relative_Path': record.get('relative_path', ''),
+                        'Status_Sync': record.get('status_sync', 'EXISTS'),
+                        'File_Name': os.path.basename(record['file_path']),
+                        'Directory': os.path.dirname(record['file_path']),
+                        'Extension': os.path.splitext(record['file_path'])[1] if record['status'] == 'file' else ''
+                    })
+                
+                df = pd.DataFrame(df_data)
+                
+                # Create summary sheet
+                summary_data = [{
+                    'Informasi': 'Export Time',
+                    'Value': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                }, {
+                    'Informasi': 'Total Records',
+                    'Value': len(self.scan_results)
+                }, {
+                    'Informasi': 'Total Files',
+                    'Value': len([r for r in self.scan_results if r['status'] == 'file'])
+                }, {
+                    'Informasi': 'Total Folders',
+                    'Value': len([r for r in self.scan_results if r['status'] == 'folder'])
+                }, {
+                    'Informasi': 'Missing Items',
+                    'Value': len([r for r in self.scan_results if r.get('status_sync') == 'MISSING'])
+                }, {
+                    'Informasi': 'Total Size (MB)',
+                    'Value': round(sum([r['ukuran_mb'] for r in self.scan_results]), 2)
+                }]
+                
+                df_summary = pd.DataFrame(summary_data)
+                
+                # Export to Excel with multiple sheets
+                with pd.ExcelWriter(file_path, engine='openpyxl') as writer:
+                    df.to_excel(writer, sheet_name="Database", index=False)
+                    df_summary.to_excel(writer, sheet_name="Summary", index=False)
+                
+                messagebox.showinfo(
+                    "Export Berhasil",
+                    f"Database berhasil di-export!\n\n"
+                    f"File: {os.path.basename(file_path)}\n"
+                    f"Total records: {len(self.scan_results)}\n"
+                    f"Sheets: Database, Summary"
+                )
+            
+            except Exception as e:
+                messagebox.showerror("Error", f"Gagal export database:\n{str(e)}")
+    
+    def refresh_treeview(self):
+        """Refresh tampilan treeview"""
+        # Clear existing items
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+        
+        # Add items from scan_results
+        for idx, record in enumerate(self.scan_results, 1):
+            status_display = record['status']
+            if record.get('status_sync') == 'MISSING':
+                status_display = f"{record['status']} (MISSING)"
+            
+            self.tree.insert("", tk.END, values=(
+                idx,
+                record['file_path'],
+                status_display,
+                record['ukuran_mb'],
+                record['last_modified'],
+                record['scan_time']
+            ))
+    
+    def open_selected_item(self, event):
+        """Buka file/folder yang dipilih dengan double-click"""
+        selected_item = self.tree.selection()
+        
+        if not selected_item:
+            return
+        
+        item_values = self.tree.item(selected_item[0], "values")
+        
+        if not item_values:
+            return
+        
+        file_path = item_values[1]  # File_Path column
+        
+        if not os.path.exists(file_path):
+            messagebox.showerror(
+                "File/Folder Tidak Ditemukan",
+                f"File atau folder tidak ditemukan:\n{file_path}\n\n"
+                f"Mungkin sudah dipindah atau dihapus.\n"
+                f"Gunakan 'Synchronize Database' untuk update status."
+            )
+            return
+        
+        try:
+            os.startfile(file_path)
+        except Exception as e:
+            messagebox.showerror(
+                "Gagal Membuka",
+                f"Gagal membuka file/folder:\n{str(e)}\n\n"
+                f"Path: {file_path}"
+            )
+    
+    def clear_database(self):
+        """Clear semua data database"""
+        if not self.scan_results:
+            messagebox.showinfo("Info", "Database sudah kosong!")
+            return
+        
+        result = messagebox.askyesno(
+            "Konfirmasi Clear Database",
+            f"Apakah Anda yakin ingin menghapus semua data database?\n\n"
+            f"Total records yang akan dihapus: {len(self.scan_results)}\n\n"
+            f"⚠️ Tindakan ini tidak dapat di-undo!"
+        )
+        
+        if result:
+            self.scan_results = []
+            self.record_count_var.set("0")
+            self.refresh_treeview()
+            self.sync_btn.config(state=tk.DISABLED)
+            
+            # Delete database file
+            if os.path.exists(self.database_file):
+                try:
+                    os.remove(self.database_file)
+                    self.status_var.set("🗑️ Database berhasil di-clear")
+                except Exception as e:
+                    self.status_var.set(f"⚠️ Error deleting file: {str(e)}")
+            
+            messagebox.showinfo("Database Cleared", "Database berhasil di-clear!")
+    
+    def back_to_menu(self):
+        """Kembali ke menu utama"""
+        if self.parent_window:
+            self.root.destroy()
+            self.parent_window.deiconify()
+
+
 class ScanLargeFilesApp:
     """Form untuk Scan File Besar (>10MB) dari Folder Arsip Digital Owncloud"""
     
@@ -4892,7 +5981,7 @@ class ScanLargeFilesApp:
         # Format dokumen yang umum/diizinkan (untuk mode format)
         self.allowed_extensions = {
             # Office Documents
-            '.doc', '.docx', '.xls', '.xlsx', '.xls', '.ppt', '.pptx',
+            '.doc', '.docx', '.xls', '.xlsx', '.xlsm', '.ppt', '.pptx',
             '.odt', '.ods', '.odp',  # OpenOffice/LibreOffice
             # PDF
             '.pdf',
@@ -4915,8 +6004,21 @@ class ScanLargeFilesApp:
     def setup_window(self):
         """Setup window utama aplikasi"""
         self.root.title("Scan File Besar (>10MB) - Arsip Digital Owncloud")
-        self.root.geometry("900x900")
+        
+        # Get screen dimensions
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        
+        # Get responsive dimensions
+        width, height, self.padding, self.fonts = get_responsive_dimensions(
+            900, 900, screen_width, screen_height
+        )
+        
+        self.root.geometry(f"{width}x{height}")
         self.root.resizable(True, True)
+        
+        # Set minimum size
+        self.root.minsize(650, 600)
         
         # Center window
         self.center_window()
@@ -4932,8 +6034,8 @@ class ScanLargeFilesApp:
     
     def create_widgets(self):
         """Membuat semua widget GUI"""
-        # Main frame
-        main_frame = ttk.Frame(self.root, padding="20")
+        # Main frame dengan padding responsif
+        main_frame = ttk.Frame(self.root, padding=str(self.padding))
         main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         
         # Configure grid weights
@@ -4942,11 +6044,11 @@ class ScanLargeFilesApp:
         main_frame.columnconfigure(0, weight=1)
         main_frame.rowconfigure(3, weight=1)
         
-        # Title
+        # Title dengan font responsif
         title_label = ttk.Label(
             main_frame, 
             text="🔍 SCAN FILE BESAR & FORMAT NON-DOKUMEN", 
-            font=("Arial", 16, "bold")
+            font=("Arial", self.fonts['title'], "bold")
         )
         title_label.grid(row=0, column=0, pady=(0, 10))
         
@@ -4954,12 +6056,13 @@ class ScanLargeFilesApp:
         subtitle_label = ttk.Label(
             main_frame, 
             text="Temukan file berukuran besar atau file dengan format tidak umum",
-            font=("Arial", 10)
+            font=("Arial", self.fonts['subtitle'])
         )
         subtitle_label.grid(row=1, column=0, pady=(0, 20))
         
-        # Frame untuk mode scan
-        mode_frame = ttk.LabelFrame(main_frame, text="Mode Scan", padding="15")
+        # Frame untuk mode scan dengan padding responsif
+        frame_padding = max(10, self.padding - 5)
+        mode_frame = ttk.LabelFrame(main_frame, text="Mode Scan", padding=str(frame_padding))
         mode_frame.grid(row=2, column=0, sticky=(tk.W, tk.E), pady=(0, 15))
         mode_frame.columnconfigure(0, weight=1)
         
@@ -4985,7 +6088,7 @@ class ScanLargeFilesApp:
         mode_format_rb.grid(row=1, column=0, sticky=tk.W, pady=(5, 0))
         
         # Frame untuk ukuran minimum (hanya aktif jika mode = size)
-        self.size_frame = ttk.LabelFrame(main_frame, text="Pengaturan Ukuran", padding="15")
+        self.size_frame = ttk.LabelFrame(main_frame, text="Pengaturan Ukuran", padding=str(frame_padding))
         self.size_frame.grid(row=3, column=0, sticky=(tk.W, tk.E), pady=(0, 15))
         self.size_frame.columnconfigure(1, weight=1)
         
@@ -4997,20 +6100,21 @@ class ScanLargeFilesApp:
         self.size_entry.grid(row=0, column=1, sticky=tk.W)
         
         ttk.Label(self.size_frame, text="(File yang lebih kecil akan diabaikan)", 
-                 font=("Arial", 8), foreground="gray").grid(row=0, column=2, sticky=tk.W, padx=(10, 0))
+                 font=("Arial", self.fonts['small']), foreground="gray").grid(row=0, column=2, sticky=tk.W, padx=(10, 0))
         
         # Frame untuk folder selection
-        folder_frame = ttk.LabelFrame(main_frame, text="Pilih Folder Arsip Digital Owncloud", padding="15")
+        folder_frame = ttk.LabelFrame(main_frame, text="Pilih Folder Arsip Digital Owncloud", padding=str(frame_padding))
         folder_frame.grid(row=4, column=0, sticky=(tk.W, tk.E), pady=(0, 15))
         folder_frame.columnconfigure(0, weight=1)
         
-        # Folder path display
+        # Folder path display dengan wraplength responsif
+        wrap_length = max(500, int(self.root.winfo_screenwidth() * 0.7))
         self.folder_var = tk.StringVar(value="Belum ada folder yang dipilih...")
         folder_path_label = ttk.Label(
             folder_frame, 
             textvariable=self.folder_var,
             foreground="gray",
-            wraplength=800
+            wraplength=wrap_length
         )
         folder_path_label.grid(row=0, column=0, sticky=(tk.W, tk.E), pady=(0, 10))
         

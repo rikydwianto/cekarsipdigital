@@ -1,9 +1,9 @@
 {{header}}
 
 <!-- API Documentation -->
-<div class="container my-5">
-  <div class="row">
-    <div class="col-lg-10 mx-auto">
+<div class="container-fluid px-3 my-4">
+  <div class="row justify-content-center">
+    <div class="col-12 col-xl-10">
       <h1 class="mb-4">
         <i class="bi bi-file-earmark-code text-primary"></i> API Documentation
       </h1>
@@ -19,9 +19,9 @@
         <div class="card-header bg-primary text-white">
           <h5 class="mb-0">Response Structure</h5>
         </div>
-        <div class="card-body">
+        <div class="card-body p-3 p-md-4">
           <h6>Success Response:</h6>
-          <pre class="bg-light p-3 rounded"><code>{
+          <pre class="bg-light p-2 p-md-3 rounded"><code>{
   "success": true,
   "message": "Deskripsi pesan",
   "data": { ... },
@@ -29,7 +29,7 @@
 }</code></pre>
 
           <h6 class="mt-4">Error Response:</h6>
-          <pre class="bg-light p-3 rounded"><code>{
+          <pre class="bg-light p-2 p-md-3 rounded"><code>{
   "success": false,
   "message": "Deskripsi error",
   "error": "Detail error",
@@ -41,11 +41,192 @@
       <!-- Available Endpoints -->
       <h3 class="mb-3">Available Endpoints</h3>
 
+      <!-- API Anggota Keluar - POST -->
+      <div class="card shadow-sm border-0 mb-3">
+        <div class="card-header bg-warning">
+          <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center">
+            <h6 class="mb-1 mb-sm-0">
+              <span class="badge bg-primary">POST</span> /api/anggota_keluar
+            </h6>
+            <small class="text-muted">Process member exit data</small>
+          </div>
+        </div>
+        <div class="card-body p-3 p-md-4">
+          <p class="mb-2">Memproses data anggota yang keluar dan menyimpan log ke sistem.</p>
+          
+          <h6>Request Body (JSON):</h6>
+          <pre class="bg-light p-2 p-md-3 rounded small"><code>{
+  "nomor_center": "0013",
+  "id_anggota": "000142_ANGGUN_RISWATI",
+  "tanggal_keluar": "2025-10-19",
+  "folder": "D:/OWNCLOUD_KOMIDA/RAWALO/02.DATA_ANGGOTA/0013/000142_ANGGUN_RISWATI",
+  "file_gambar": "(binary data or base64)"
+}</code></pre>
+
+          <h6>Request Body (Form Data):</h6>
+          <pre class="bg-light p-2 p-md-3 rounded small"><code>nomor_center=0013&id_anggota=000142_ANGGUN_RISWATI&tanggal_keluar=2025-10-19&folder=D:/OWNCLOUD_KOMIDA/RAWALO/02.DATA_ANGGOTA/0013/000142_ANGGUN_RISWATI</code></pre>
+          
+          <h6>Success Response (201):</h6>
+          <pre class="bg-light p-2 p-md-3 rounded small"><code>{
+  "success": true,
+  "message": "Data anggota keluar berhasil diproses",
+  "data": {
+    "processed_data": {
+      "nomor_center": "0013",
+      "id_anggota": "000142_ANGGUN_RISWATI",
+      "tanggal_keluar": "2025-10-19",
+      "folder": "D:/OWNCLOUD_KOMIDA/RAWALO/02.DATA_ANGGOTA/0013/000142_ANGGUN_RISWATI",
+      "folder_exists": true,
+      "processed_at": "2025-10-19T10:30:00",
+      "status": "processed"
+    },
+    "log_saved": {
+      "success": true,
+      "file_path": "anggota_keluar_log.csv"
+    },
+    "summary": {
+      "center": "0013",
+      "anggota": "000142_ANGGUN_RISWATI",
+      "tanggal": "2025-10-19",
+      "folder_valid": true
+    }
+  }
+}</code></pre>
+
+          <h6>Error Response (400):</h6>
+          <pre class="bg-light p-2 p-md-3 rounded small"><code>{
+  "success": false,
+  "message": "Missing required fields: nomor_center, tanggal_keluar",
+  "error": "Incomplete data"
+}</code></pre>
+
+          <p class="mb-3"><strong>Required Fields:</strong></p>
+          <ul>
+            <li><code>nomor_center</code> - Nomor center (4 digit)</li>
+            <li><code>id_anggota</code> - ID anggota lengkap</li>
+            <li><code>tanggal_keluar</code> - Tanggal format YYYY-MM-DD</li>
+            <li><code>folder</code> - Path folder anggota</li>
+          </ul>
+
+          <p class="mb-3"><strong>Optional Fields:</strong></p>
+          <ul>
+            <li><code>file_gambar</code> - File gambar (binary/base64)</li>
+          </ul>
+
+          <p class="mb-2"><strong>Features:</strong></p>
+          <ul>
+            <li>Validasi format data otomatis</li>
+            <li>Logging ke CSV file</li>
+            <li>Validasi folder existence</li>
+            <li>Support JSON dan Form data</li>
+            <li>Comprehensive error handling</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- API Data Arsip All -->
+      <div class="card shadow-sm border-0 mb-3">
+        <div class="card-header bg-light">
+          <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center">
+            <h6 class="mb-1 mb-sm-0">
+              <span class="badge bg-success">GET</span> /api/data_arsip_all
+            </h6>
+            <small class="text-muted">Optimized with caching & compression</small>
+          </div>
+        </div>
+        <div class="card-body p-3 p-md-4">
+          <p class="mb-2">Mendapatkan seluruh data arsip dari database Excel yang telah di-generate.</p>
+          <p class="mb-3"><strong>Features:</strong></p>
+          <ul>
+            <li>Automatic caching (5 minutes TTL)</li>
+            <li>Gzip compression for large responses</li>
+            <li>Multiple database file format support</li>
+            <li>Comprehensive metadata included</li>
+          </ul>
+          <h6>Example Response:</h6>
+          <pre class="bg-light p-2 p-md-3 rounded small"><code>{
+  "success": true,
+  "message": "Data arsip retrieved successfully",
+  "data": {
+    "data": [...],
+    "metadata": {
+      "total_records": 1234,
+      "columns": ["Path", "Status", "Size", ...],
+      "file_path": "database.xlsx",
+      "last_modified": 1699363200.0,
+      "file_size_mb": 2.45,
+      "cache_enabled": true
+    },
+    "status": "success"
+  }
+}</code></pre>
+        </div>
+      </div>
+
+      <!-- API Data Arsip Summary -->
+      <div class="card shadow-sm border-0 mb-3">
+        <div class="card-header bg-light">
+          <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center">
+            <h6 class="mb-1 mb-sm-0">
+              <span class="badge bg-success">GET</span> /api/data_arsip_summary
+            </h6>
+            <small class="text-muted">Statistics & overview</small>
+          </div>
+        </div>
+        <div class="card-body p-3 p-md-4">
+          <p class="mb-2">Mendapatkan ringkasan statistik dari data arsip.</p>
+          <h6>Example Response:</h6>
+          <pre class="bg-light p-2 p-md-3 rounded small"><code>{
+  "success": true,
+  "data": {
+    "total_files": 856,
+    "total_folders": 123,
+    "total_items": 979,
+    "total_size_mb": 245.67,
+    "file_extensions": {
+      "pdf": 234,
+      "docx": 156,
+      "xlsx": 98
+    }
+  }
+}</code></pre>
+        </div>
+      </div>
+
+      <!-- Cache Management -->
+      <div class="card shadow-sm border-0 mb-3">
+        <div class="card-header bg-light">
+          <h6 class="mb-0">Cache Management</h6>
+        </div>
+        <div class="card-body p-3 p-md-4">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <h6><span class="badge bg-info">GET</span> /api/cache/status</h6>
+              <p class="small mb-2">Mendapatkan status cache saat ini</p>
+              <pre class="bg-light p-2 rounded small"><code>{
+  "cached_items": 5,
+  "max_size": 100,
+  "ttl_seconds": 300
+}</code></pre>
+            </div>
+            <div class="col-md-6">
+              <h6><span class="badge bg-warning">GET</span> /api/cache/clear</h6>
+              <p class="small mb-2">Membersihkan seluruh cache</p>
+              <pre class="bg-light p-2 rounded small"><code>{
+  "success": true,
+  "message": "Cache cleared successfully",
+  "data": {"status": "cleared"}
+}</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- API Status -->
       <div class="card shadow-sm border-0 mb-3">
         <div class="card-header bg-light">
-          <div class="d-flex justify-content-between align-items-center">
-            <h6 class="mb-0">
+          <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center">
+            <h6 class="mb-1 mb-sm-0">
               <span class="badge bg-success">GET</span> /api/status
             </h6>
             <a
@@ -141,6 +322,65 @@
     },
     "folder": {
       "default": "C:/Data/Arsip"
+    }
+  },
+  "timestamp": "2025-10-17 12:00:00"
+}</code></pre>
+        </div>
+      </div>
+
+      <!-- API Data Arsip All -->
+      <div class="card shadow-sm border-0 mb-3">
+        <div class="card-header bg-light">
+          <div class="d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">
+              <span class="badge bg-success">GET</span> /api/data_arsip_all
+            </h6>
+            <a
+              href="/api/data_arsip_all"
+              class="btn btn-sm btn-primary"
+              target="_blank"
+            >
+              Try it <i class="bi bi-box-arrow-up-right"></i>
+            </a>
+          </div>
+        </div>
+        <div class="card-body">
+          <p class="text-muted">Mendapatkan seluruh data arsip dari database Excel yang telah di-generate oleh Universal Scan atau Auto Database Generator.</p>
+          <div class="alert alert-warning small">
+            <i class="bi bi-exclamation-triangle"></i>
+            <strong>Note:</strong> Endpoint ini memerlukan file <code>arsip_database_for_web.xlsx</code> yang dihasilkan dari scan folder. Lakukan Universal Scan atau set Default Folder di Settings untuk generate database.
+          </div>
+          <h6>Response Example:</h6>
+          <pre class="bg-light p-3 rounded small"><code>{
+  "success": true,
+  "message": "Data arsip berhasil dimuat",
+  "data": {
+    "records": [
+      {
+        "ID": 1,
+        "File_Path": "D:\\Data\\1234\\123456_BUDI\\01_BUDI.pdf",
+        "Status": "file",
+        "Ukuran_MB": 0.5,
+        "Created": "2025-10-17 10:00:00",
+        "Modified": "2025-10-17 10:30:00",
+        "Extension": ".pdf",
+        "Center_Code": "1234",
+        "ID_Anggota": "123456",
+        "Nama_Anggota": "BUDI"
+      }
+    ],
+    "summary": {
+      "total_anggota": 150,
+      "anggota_lengkap": 120,
+      "anggota_tidak_lengkap": 30,
+      "completion_rate": 80.0,
+      "last_updated": "2025-10-17 12:00:00"
+    },
+    "metadata": {
+      "source_file": "arsip_database_for_web.xlsx",
+      "columns": ["ID", "File_Path", "Status", "Ukuran_MB", ...],
+      "record_count": 150
     }
   },
   "timestamp": "2025-10-17 12:00:00"
