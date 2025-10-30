@@ -3165,7 +3165,8 @@ class UniversalScanApp:
         # Initialize variables
         self.selected_folder = ""
         self.scan_results = []
-        self.database_file = "universal_scan_database.xlsx"
+        from app_helpers import get_universal_scan_database_path
+        self.database_file = get_universal_scan_database_path()  # Simpan di AppData
         
         self.setup_window()
         self.create_widgets()

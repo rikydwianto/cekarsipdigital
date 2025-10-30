@@ -30,6 +30,16 @@ def get_export_path():
     return os.path.join(get_appdata_path(), 'file_export.xlsx')
 
 
+def get_config_path():
+    """Get full path untuk app_config.json di AppData"""
+    return os.path.join(get_appdata_path(), 'app_config.json')
+
+
+def get_universal_scan_database_path():
+    """Get full path untuk universal_scan_database.xlsx di AppData"""
+    return os.path.join(get_appdata_path(), 'universal_scan_database.xlsx')
+
+
 def get_responsive_dimensions(base_width, base_height, screen_width, screen_height):
     """Calculate responsive window dimensions based on screen size"""
     if screen_width >= 1920:  # Large screens (4K, etc)
@@ -66,7 +76,7 @@ class ConfigManager:
     """Manager untuk menyimpan dan membaca konfigurasi aplikasi"""
     
     def __init__(self):
-        self.config_file = "app_config.json"
+        self.config_file = get_config_path()  # Simpan di AppData
         self.default_config = {
             "default_folder": "",
             "web_server_enabled": False,

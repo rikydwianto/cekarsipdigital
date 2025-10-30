@@ -1217,11 +1217,15 @@ class HelloWorldHandler(BaseHTTPRequestHandler):
 class WebServerManager:
     """Manager untuk mengelola web server sederhana"""
     
-    def __init__(self, config_file="app_config.json"):
+    def __init__(self, config_file=None):
         self.server = None
         self.server_thread = None
         self.is_running = False
-        self.config_file = config_file
+        if config_file is None:
+            from app_helpers import get_config_path
+            self.config_file = get_config_path()  # Gunakan path dari AppData
+        else:
+            self.config_file = config_file
         self.port = self.get_web_server_port()
         self.default_folder = None
     

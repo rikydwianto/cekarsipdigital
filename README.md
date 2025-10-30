@@ -172,8 +172,10 @@ Aplikasi menyimpan file database dan export di **AppData Local** sesuai Windows 
 
 ```
 C:\Users\[Username]\AppData\Local\ArsipDigitalOwnCloud\
-├── database.xlsx        # Database hasil scan
-└── file_export.xlsx     # File export matching data
+├── database.xlsx                    # Database hasil scan (Arsip Digital)
+├── file_export.xlsx                 # File export matching data
+├── app_config.json                  # Konfigurasi aplikasi
+└── universal_scan_database.xlsx     # Database universal scan
 ```
 
 ### Cara Akses Folder AppData
@@ -782,7 +784,7 @@ Tombol **🔬 Analisa Data** memungkinkan Anda mengambil data dari dalam setiap 
 - **Set Default Folder** - Pilih folder yang sering digunakan
 - **Auto-Load** - Semua browse dialog langsung ke folder ini
 - **Hapus Default** - Reset ke current directory
-- **Persistent Storage** - Disimpan di `app_config.json`
+- **Persistent Storage** - Disimpan di AppData `app_config.json`
 
 #### Form yang Mendukung
 
@@ -812,15 +814,17 @@ Tombol **🔬 Analisa Data** memungkinkan Anda mengambil data dari dalam setiap 
 
 #### File Konfigurasi
 
-**app_config.json** (auto-generated):
+**app_config.json** (auto-generated di AppData):
 
 ```json
 {
-  "default_folder": "D:\\Data_Anggota_Owncloud"
+  "default_folder": "D:\\Data_Anggota_Owncloud",
+  "web_server_enabled": false,
+  "web_server_port": 1212
 }
 ```
 
-**Lokasi**: Root folder aplikasi
+**Lokasi**: `C:\Users\[Username]\AppData\Local\ArsipDigitalOwnCloud\app_config.json`
 
 **Security**:
 
@@ -836,26 +840,41 @@ Tombol **🔬 Analisa Data** memungkinkan Anda mengambil data dari dalam setiap 
 
 ```
 ARSIPOWNCLOUD/
-├── main.py                    # Aplikasi utama
+├── main.py                    # Aplikasi utama (Main Menu)
+├── app_helpers.py             # Helper functions & ConfigManager
+├── app_settings.py            # Settings application
+├── app_kk_checker.py          # KK checker with OCR
+├── app_dana_checker.py        # Dana checker
+├── app_pdf_tools.py           # PDF manipulation tools
+├── app_arsip.py               # Arsip applications (3 classes)
+├── app_scan_files.py          # Large file scanner
 ├── arsip_logic.py             # Business logic
+├── web_server.py              # Web server for remote access
 ├── requirements.txt           # Dependencies
 ├── README.md                  # Dokumentasi (file ini)
 ├── .gitignore                 # Git ignore rules
-├── app_config.json           # Config (auto-generated, gitignored)
-├── file_export.xlsx          # Export result (gitignored)
 ├── .venv/                     # Virtual environment
 ├── build/                     # Build artifacts
+├── src_web/                   # Web interface templates
 └── ArsipOwncloud_Portable/   # Portable executable
 ```
 
+**Data Files** (auto-generated di AppData):
+- `app_config.json` - Konfigurasi aplikasi
+- `database.xlsx` - Database hasil scan
+- `file_export.xlsx` - File export matching data
+- `universal_scan_database.xlsx` - Database universal scan
+
 ### Config Files
 
-| File               | Deskripsi                  | Git        |
-| ------------------ | -------------------------- | ---------- |
-| `app_config.json`  | Konfigurasi default folder | ❌ Ignored |
-| `file_export.xlsx` | File export hasil scan     | ❌ Ignored |
-| `requirements.txt` | Python dependencies        | ✅ Tracked |
-| `.gitignore`       | Git ignore rules           | ✅ Tracked |
+| File                             | Deskripsi                      | Lokasi   |
+| -------------------------------- | ------------------------------ | -------- |
+| `app_config.json`                | Konfigurasi default folder     | AppData  |
+| `database.xlsx`                  | Database hasil scan            | AppData  |
+| `file_export.xlsx`               | File export hasil scan         | AppData  |
+| `universal_scan_database.xlsx`   | Database universal scan        | AppData  |
+| `requirements.txt`               | Python dependencies            | Project  |
+| `.gitignore`                     | Git ignore rules               | Project  |
 
 ---
 
@@ -1099,9 +1118,19 @@ pip install pandas openpyxl
 
 **Solusi**:
 
-- Hapus file `app_config.json`
+- Hapus file di `C:\Users\[Username]\AppData\Local\ArsipDigitalOwnCloud\app_config.json`
 - Aplikasi akan auto-create config baru
-- Set ulang default folder
+- Set ulang default folder di menu Pengaturan
+
+### Database File Hilang
+
+**Problem**: File `database.xlsx` atau `universal_scan_database.xlsx` tidak ditemukan
+
+**Solusi**:
+
+- Cek folder AppData: `%LOCALAPPDATA%\ArsipDigitalOwnCloud`
+- Aplikasi akan auto-create file baru jika tidak ada
+- Restore dari backup jika tersedia
 
 ### Excel Export Gagal
 
