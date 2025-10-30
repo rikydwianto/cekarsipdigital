@@ -4,6 +4,28 @@ Menyediakan HTTP server sederhana untuk akses file arsip melalui browser
 """
 
 import os
+
+
+# Helper function untuk mendapatkan path AppData
+def get_appdata_path():
+    """Get AppData Local path untuk menyimpan database dan export files"""
+    appdata = os.getenv('LOCALAPPDATA')  # C:\Users\Username\AppData\Local
+    if not appdata:
+        appdata = os.path.expanduser('~\\AppData\\Local')
+    
+    # Buat folder khusus aplikasi
+    app_folder = os.path.join(appdata, 'ArsipDigitalOwnCloud')
+    if not os.path.exists(app_folder):
+        os.makedirs(app_folder)
+    
+    return app_folder
+
+
+def get_database_path():
+    """Get full path untuk database.xlsx di AppData"""
+    return os.path.join(get_appdata_path(), 'database.xlsx')
+
+import os
 import socket
 import threading
 import time
@@ -16,8 +38,13 @@ import gzip
 import hashlib
 from functools import lru_cache
 
-# QR Code library
-import qrcode
+# QR Code library (optional)
+try:
+    import qrcode
+    QR_AVAILABLE = True
+except ImportError:
+    QR_AVAILABLE = False
+    qrcode = None
 
 # Pandas for Excel reading
 import pandas as pd
@@ -281,7 +308,7 @@ class HelloWorldHandler(BaseHTTPRequestHandler):
             context = get_default_context(server_info)
 
             # Render template
-            html_content = self.template_loader.render('form_anggota_keluar.html', context, active_page='form_anggota_keluar')
+            html_content = self.template_loader.render('form_anggota_keluar.html', context, active_page='anggota_keluar')
 
             # Send response
             self.send_response(200)
@@ -662,7 +689,7 @@ class HelloWorldHandler(BaseHTTPRequestHandler):
                 # === Ambil tahun dan bulan ===
                 dt = datetime.strptime(tanggal_keluar, "%Y-%m-%d")
                 tahun = str(dt.year)
-                bulan = f"{dt.month:02d}.{month_name[dt.month].upper()}"
+                bulan = get_bulan(tanggal_keluar)
 
                 # === Nama anggota dari ID ===
                 try:
@@ -692,6 +719,10 @@ class HelloWorldHandler(BaseHTTPRequestHandler):
                         shutil.move(folder_asal, target_dir)
                 else:
                     print(f"⚠️ Folder asal tidak ditemukan: {folder_asal}")
+                    return {
+                        "success": False,
+                        "message": f"Folder asal tidak ditemukan: {folder_asal}",
+                    }
 
                 # === Jika ada file upload, ubah ke PDF jika gambar ===
                 new_file_path = None
@@ -721,13 +752,13 @@ class HelloWorldHandler(BaseHTTPRequestHandler):
                         if os.path.exists(upload_dir):
                             shutil.rmtree(upload_dir, ignore_errors=True)
 
-                print("✅ Proses selesai:")
-                print(f"Center: {nomor_center}")
-                print(f"Anggota: {id_anggota}")
-                print(f"Tanggal: {tanggal_keluar}")
-                print(f"Folder Asal: {folder_asal}")
-                print(f"Folder Tujuan: {target_dir}")
-                print(f"File Upload Baru: {new_file_path}")
+                # print("✅ Proses selesai:")
+                # print(f"Center: {nomor_center}")
+                # print(f"Anggota: {id_anggota}")
+                # print(f"Tanggal: {tanggal_keluar}")
+                # print(f"Folder Asal: {folder_asal}")
+                # print(f"Folder Tujuan: {target_dir}")
+                # print(f"File Upload Baru: {new_file_path}")
 
                 return {
                     "success": True,
@@ -773,8 +804,7 @@ class HelloWorldHandler(BaseHTTPRequestHandler):
             # Ini adalah placeholder untuk update database
             # Bisa diimplementasikan untuk update Excel atau database lain
             
-            base_dir = os.path.dirname(os.path.abspath(__file__))
-            db_file = os.path.join(base_dir, "database.xlsx")
+            db_file = get_database_path()
             
             if not os.path.exists(db_file):
                 return {
@@ -802,8 +832,7 @@ class HelloWorldHandler(BaseHTTPRequestHandler):
     def data_center(self):
         """Get list of center numbers with caching"""
         try:
-            base_dir = os.path.dirname(os.path.abspath(__file__))
-            file_path_db = os.path.join(base_dir, "database.xlsx")
+            file_path_db = get_database_path()
             
             if not os.path.exists(file_path_db):
                 return []
@@ -840,8 +869,7 @@ class HelloWorldHandler(BaseHTTPRequestHandler):
     def data_center_anggota(self, center):
         """Get member data for specific center with caching"""
         try:
-            base_dir = os.path.dirname(os.path.abspath(__file__))
-            file_path_db = os.path.join(base_dir, "database.xlsx")
+            file_path_db = get_database_path()
             
             if not os.path.exists(file_path_db):
                 return []
@@ -891,8 +919,7 @@ class HelloWorldHandler(BaseHTTPRequestHandler):
     def data_center_anggotaByID(self, id):
         """Get member data by ID with file count and caching"""
         try:
-            base_dir = os.path.dirname(os.path.abspath(__file__))
-            file_path_db = os.path.join(base_dir, "database.xlsx")
+            file_path_db = get_database_path()
             
             if not os.path.exists(file_path_db):
                 return []
@@ -949,26 +976,14 @@ class HelloWorldHandler(BaseHTTPRequestHandler):
     def get_data_arsip_all(self):
         """Optimized method to get all archive data from database.xlsx with caching"""
         try:
-            base_dir = os.path.dirname(os.path.abspath(__file__))
+            # Check for database.xlsx in AppData first
+            db_file = get_database_path()
             
-            # Check for database.xlsx in root project first
-            db_files = [
-                os.path.join(base_dir, "database.xlsx"),
-                os.path.join(base_dir, "arsip_database.xlsx"),  # fallback name
-                os.path.join(base_dir, "data_arsip.xlsx")        # alternative name
-            ]
-            
-            db_file = None
-            for file_path in db_files:
-                if os.path.exists(file_path):
-                    db_file = file_path
-                    break
-            
-            if not db_file:
+            if not os.path.exists(db_file):
                 return {
                     "error": "Database file not found",
-                    "message": "Please generate database first using Universal Scan feature",
-                    "expected_files": [os.path.basename(f) for f in db_files]
+                    "message": f"Please generate database first using Universal Scan feature. Expected location: {db_file}",
+                    "expected_file": db_file
                 }
             
             # Get file modification time for cache validation

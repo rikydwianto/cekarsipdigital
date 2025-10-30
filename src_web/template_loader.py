@@ -56,6 +56,7 @@ class TemplateLoader:
             # Set active menu
             context['active_home'] = 'active' if active_page == 'home' else ''
             context['active_about'] = 'active' if active_page == 'about' else ''
+            context['active_AnggotaKeluar'] = 'active' if active_page == 'anggota_keluar' else ''
             context['active_api'] = 'active' if active_page == 'api' else ''
             
             # Replace partials dulu

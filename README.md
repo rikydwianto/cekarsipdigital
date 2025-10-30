@@ -2,27 +2,43 @@
 
 > Aplikasi desktop berbasis Python untuk manajemen, scanning, dan analisis arsip digital Owncloud
 
-**Versi**: 1.0.5
+**Versi**: 1.1.6 🆕
 **Tanggal**: Oktober 2025
 **Developer**: Riky Dwianto
 
 ---
 
-## 📋 Daftar Isi
+## 🎉 What's New in v1.1.6
+
+### **Major Refactoring** - Modular Structure
+
+✅ **Code Organization**: Main.py dipecah menjadi 8 modul terpisah  
+✅ **Maintainability**: Struktur kode lebih mudah dipelihara  
+✅ **Arsip Category**: Semua fitur arsip digabung dalam `app_arsip.py`  
+✅ **Zero Breaking Changes**: Semua fungsi tetap sama
+
+� **Detail**: Lihat `REFACTORING_SUCCESS.md` untuk informasi lengkap
+
+---
+
+## �📋 Daftar Isi
 
 1. [Deskripsi Umum](#-deskripsi-umum)
-2. [Instalasi &amp; Setup](#-instalasi--setup)
-3. [Menu Utama](#-menu-utama)
-4. [Fitur Detail](#-fitur-detail)
+2. [Struktur Kode (NEW)](#-struktur-kode-new-)
+3. [Instalasi & Setup](#-instalasi--setup)
+4. [Menu Utama](#-menu-utama)
+5. [Fitur Detail](#-fitur-detail)
    - [Cek Arsip Digital](#1-cek-arsip-digital)
    - [Scan Folder Arsip Digital](#2-scan-folder-arsip-digital)
-   - [Scan File Besar &amp; Format Non-Dokumen](#3-scan-file-besar--format-non-dokumen)
-   - [Cek Pengajuan Dana](#4-cek-pengajuan-dana)
-   - [Pengaturan](#5-pengaturan)
-5. [Struktur Folder](#-struktur-folder)
+   - [Universal Scan Database](#3-universal-scan-database)
+   - [Scan File Besar](#4-scan-file-besar)
+   - [Cek Pengajuan Dana](#5-cek-pengajuan-dana)
+   - [Cek NO KK](#6-cek-no-kk)
+   - [PDF Tool](#7-pdf-tool)
+   - [Pengaturan](#8-pengaturan)
 6. [Dependencies](#-dependencies)
 7. [Build Executable](#-build-executable)
-8. [Tips &amp; Best Practices](#-tips--best-practices)
+8. [Tips & Best Practices](#-tips--best-practices)
 9. [Troubleshooting](#-troubleshooting)
 10. [FAQ](#-faq)
 
@@ -40,14 +56,48 @@ Aplikasi **ARSIP OWNCLOUD** adalah sistem manajemen arsip digital yang dirancang
 
 ### Fitur Utama
 
-| Fitur                        | Deskripsi                                            |
-| ---------------------------- | ---------------------------------------------------- |
-| **Cek Arsip Digital**  | Matching data folder dengan database Excel anggota   |
-| **Scan Folder**        | Validasi 8 folder standar dengan export detail       |
-| **Scan File Besar**    | Deteksi file berukuran besar dengan threshold kustom |
-| **Format Non-Dokumen** | Identifikasi file dengan ekstensi tidak standar      |
-| **Cek Pengajuan Dana** | Scan otomatis file PENGAJUAN_DANA.xlsm multi-tahun   |
-| **Pengaturan**         | Simpan default folder untuk semua form               |
+| Fitur                         | Deskripsi                                          |
+| ----------------------------- | -------------------------------------------------- |
+| **Cek Arsip Digital**         | Matching data folder dengan database Excel anggota |
+| **Scan Folder Arsip Digital** | Validasi 8 folder standar dengan export detail     |
+| **Universal Scan Database**   | Scan komprehensif dengan multiple sheet output     |
+
+---
+
+## 📦 Struktur Kode (NEW) 🆕
+
+Aplikasi sekarang menggunakan **modular structure** untuk maintainability yang lebih baik:
+
+```
+ARSIPOWNCLOUD/
+├── main.py                  # 🎯 Entry point & Main Menu (300 lines)
+├── app_helpers.py           # 🛠️ Helper functions & ConfigManager
+├── app_settings.py          # ⚙️ Settings & web server
+├── app_kk_checker.py        # 👨‍👩‍👧‍👦 NO KK validation with OCR
+├── app_dana_checker.py      # 💰 Pengajuan Dana checker
+├── app_pdf_tools.py         # 📃 PDF tools (merge/split/OCR)
+├── app_arsip.py             # 📋 3 Arsip forms (grouped)
+│   ├── ArsipDigitalApp      #    - Cek Arsip Digital
+│   ├── ScanFolderApp        #    - Scan Folder Arsip
+│   └── UniversalScanApp     #    - Universal Scan
+├── app_scan_files.py        # 📊 Large file scanner
+├── arsip_logic.py           # 🧠 Business logic
+└── web_server.py            # 🌐 Web server
+```
+
+**Benefits**:
+
+- ✅ **96% smaller main.py** (7,628 → 300 lines)
+- ✅ **Easy to find code** - Each module has clear purpose
+- ✅ **Better collaboration** - Multiple devs can work simultaneously
+- ✅ **Faster development** - Isolated testing and debugging
+
+📖 **Learn More**: `REFACTORING_SUCCESS.md`
+| **Scan File Besar** | Deteksi file berukuran besar dengan threshold kustom |
+| **Cek Pengajuan Dana** | Scan otomatis file PENGAJUAN_DANA.xlsm multi-tahun |
+| **Cek NO KK** | Ekstrak dan validasi Nomor Kartu Keluarga dari PDF dengan OCR |
+| **PDF Tool** | Konversi Images↔PDF, Merge, Split, Compress PDF |
+| **Pengaturan** | Simpan default folder untuk semua form |
 
 ---
 
@@ -114,9 +164,47 @@ ArsipOwncloud.exe
 
 ---
 
+## 💾 Lokasi Penyimpanan File
+
+### File Data Aplikasi
+
+Aplikasi menyimpan file database dan export di **AppData Local** sesuai Windows best practice:
+
+```
+C:\Users\[Username]\AppData\Local\ArsipDigitalOwnCloud\
+├── database.xlsx        # Database hasil scan
+└── file_export.xlsx     # File export matching data
+```
+
+### Cara Akses Folder AppData
+
+**Metode 1: Keyboard Shortcut**
+
+1. Tekan `Win + R`
+2. Ketik: `%LOCALAPPDATA%\ArsipDigitalOwnCloud`
+3. Tekan Enter
+
+**Metode 2: File Explorer**
+
+1. Buka File Explorer
+2. Enable "Show hidden files" di View options
+3. Navigate ke: `C:\Users\[YourUsername]\AppData\Local\ArsipDigitalOwnCloud`
+
+### Mengapa AppData?
+
+✅ **Best Practice Windows**: Aplikasi tidak menulis ke Program Files
+✅ **Tidak Perlu Admin**: User biasa bisa write tanpa elevated privileges
+✅ **User Isolation**: Setiap Windows user punya data sendiri
+✅ **Mudah Backup**: Terbackup otomatis dengan Windows Backup
+✅ **Kompatibilitas**: Sesuai standar modern Windows applications
+
+> 📝 **Note**: File `database.xlsx` dan `file_export.xlsx` dibuat otomatis saat scan pertama kali. Aplikasi akan menampilkan full path di error message jika file tidak ditemukan.
+
+---
+
 ## 🏠 Menu Utama
 
-Aplikasi memiliki menu utama dengan 5 tombol:
+Aplikasi memiliki menu utama dengan 8 tombol dalam layout 2 kolom:
 
 ```
 ┌─────────────────────────────────────┐
@@ -125,12 +213,15 @@ Aplikasi memiliki menu utama dengan 5 tombol:
 ├─────────────────────────────────────┤
 │  📋 Cek Arsip Digital              │
 │  📂 Scan Folder Arsip Digital      │
+│  🌐 Universal Scan Database        │
 │  📊 Scan File Besar                │
 │  💰 Cek Pengajuan Dana             │
+│  👨‍👩‍👧‍👦 Cek NO KK                    │
+│  📃 PDF Tool                       │
 │  ⚙️  Pengaturan                     │
 ├─────────────────────────────────────┤
 │           [Keluar]                  │
-│     v1.0.5 - Developed by RD        │
+│     v1.1.5 - Developed by RD        │
 └─────────────────────────────────────┘
 ```
 
@@ -148,10 +239,12 @@ Aplikasi memiliki menu utama dengan 5 tombol:
 
    - Browse ke folder yang berisi data anggota
    - Bisa single anggota, center, atau root folder
+
 2. **Pilih File Excel Database**
 
    - Browse file Excel dengan format header B3-Y3
    - File berisi data anggota lengkap
+
 3. **Proses Arsip**
 
    - Klik "Proses Arsip"
@@ -185,24 +278,31 @@ Aplikasi memiliki menu utama dengan 5 tombol:
 
    - `01.SURAT_MASUK` → Tahun → Bulan
    - `02.SURAT_KELUAR` → Tahun → Bulan
+
 2. **02.DATA_ANGGOTA**
 
    - Center (4-digit) → `IDIDID_NAMA`
+
 3. **03.DATA_ANGGOTA_KELUAR**
 
    - Tahun → Bulan → `IDIDID_NAMA`
+
 4. **04.DATA_DANA_RESIKO**
 
    - Tahun → Bulan → `IDIDID_NAMA` → File
-5. **05.BUKU_HARI_RAYA_ANGGOTA**
+
+5. **05.DATA_HARI_RAYA_ANGGOTA**
 
    - Tahun → File bulanan
+
 6. **06.LAPORAN_BULANAN**
 
    - Tahun → Bulan → 12 jenis dokumen
+
 7. **07.BUKU_BANK**
 
    - Tahun → Bulan → `DD_BUKUBANK.XLSX`
+
 8. **08.DATA_LWK**
 
    - Tahun → Bulan → `DD_CCCC.PDF`
@@ -216,7 +316,76 @@ Aplikasi memiliki menu utama dengan 5 tombol:
 
 ---
 
-### 3. Scan File Besar & Format Non-Dokumen
+### 3. Universal Scan Database
+
+**Fungsi**: Scan komprehensif struktur folder dan buat database lengkap dengan multiple sheet
+
+#### Fitur Utama
+
+- **Scan Folder Lengkap** - Deteksi otomatis semua folder dan file
+- **Database Excel** - Output ke `database.xlsx` di AppData
+- **Multiple Sheet** - Setiap folder punya sheet sendiri
+- **Auto-detect Structure** - Tidak perlu config manual
+- **Export Option** - Simpan dan Sinkron ke AppData
+
+#### Cara Kerja
+
+1. **Pilih Folder Root**
+
+   - Browse ke folder arsip utama
+   - Bisa root, center, atau anggota
+
+2. **Proses Scan**
+
+   - Deteksi struktur folder otomatis
+   - Scan file di setiap subfolder
+   - Collect metadata (nama, ukuran, path, type)
+
+3. **Generate Database**
+   - Buat `database.xlsx` di AppData
+   - Lokasi: `C:\Users\[Username]\AppData\Local\ArsipDigitalOwnCloud\database.xlsx`
+   - Multiple sheet sesuai struktur folder
+
+#### Output Database Structure
+
+**Sheet per Folder Type:**
+
+- `01.SURAT_MENYURAT` - Data surat masuk/keluar
+- `02.DATA_ANGGOTA` - Data anggota per center
+- `03.DATA_ANGGOTA_KELUAR` - Data anggota keluar
+- `04.DATA_DANA_RESIKO` - Data dana resiko
+- `05.DATA_HARI_RAYA_ANGGOTA` - Data hari raya
+- `06.LAPORAN_BULANAN` - Laporan bulanan
+- `07.BUKU_BANK` - Data buku bank
+- `08.DATA_LWK` - Data LWK
+
+**Kolom di Setiap Sheet:**
+
+- NOMOR_CENTER
+- ID_NAMA_ANGGOTA
+- NAMA_FILE
+- TYPE (FOLDER/FILE)
+- UKURAN_KB
+- PATH
+
+#### Integrasi dengan Fitur Lain
+
+Database yang dibuat akan digunakan oleh:
+
+- ✅ **Cek NO KK** - Baca list file PDF dari sheet `02.DATA_ANGGOTA`
+- ✅ **Web Server** - API data anggota
+- ✅ **Export Matching** - Matching dengan hasil scan
+
+#### Use Cases
+
+1. **Database Master** - Buat database lengkap untuk seluruh arsip
+2. **Quick Scan** - Scan cepat tanpa perlu setup detail
+3. **Data Integration** - Sumber data untuk fitur lain
+4. **Inventory** - Inventarisasi lengkap file dan folder
+
+---
+
+### 4. Scan File Besar
 
 **Fungsi**: Mencari file berdasarkan ukuran atau format file
 
@@ -279,7 +448,7 @@ File berikut **SELALU DIABAIKAN**:
 
 ---
 
-### 4. Cek Pengajuan Dana
+### 5. Cek Pengajuan Dana
 
 **Fungsi**: Scan dan inventarisasi file PENGAJUAN_DANA.xlsm dari Surat Keluar
 
@@ -331,15 +500,15 @@ Tombol **🔬 Analisa Data** memungkinkan Anda mengambil data dari dalam setiap 
 
 **Data yang Diekstrak:**
 
-| No | Data Field                        | Lokasi         | Cell | Keterangan                       |
-| -- | --------------------------------- | -------------- | ---- | -------------------------------- |
-| 1  | **Nomor Surat**             | Sheet Surat    | F8   | Nomor surat dari dalam file      |
-| 2  | **Nominal Input Kebutuhan** | Sheet Surat    | I8   | Nominal kebutuhan input          |
-| 3  | **Nominal Kebutuhan**       | Sheet Laporan  | F68  | Total nominal kebutuhan          |
-| 4  | **Status Balance**          | Sheet Laporan  | A4   | Status balance (BALANCE/SELISIH) |
-| 5  | **Tanggal Disburse Awal**   | Sheet Lampiran | C3   | Tanggal mulai disburse           |
-| 6  | **Tanggal Disburse Akhir**  | Sheet Lampiran | E3   | Tanggal akhir disburse           |
-| 7  | **Nama BM**                 | Sheet Laporan  | A83  | Nama Branch Manager              |
+| No  | Data Field                  | Lokasi         | Cell | Keterangan                       |
+| --- | --------------------------- | -------------- | ---- | -------------------------------- |
+| 1   | **Nomor Surat**             | Sheet Surat    | F8   | Nomor surat dari dalam file      |
+| 2   | **Nominal Input Kebutuhan** | Sheet Surat    | I8   | Nominal kebutuhan input          |
+| 3   | **Nominal Kebutuhan**       | Sheet Laporan  | F68  | Total nominal kebutuhan          |
+| 4   | **Status Balance**          | Sheet Laporan  | A4   | Status balance (BALANCE/SELISIH) |
+| 5   | **Tanggal Disburse Awal**   | Sheet Lampiran | C3   | Tanggal mulai disburse           |
+| 6   | **Tanggal Disburse Akhir**  | Sheet Lampiran | E3   | Tanggal akhir disburse           |
+| 7   | **Nama BM**                 | Sheet Laporan  | A83  | Nama Branch Manager              |
 
 **Detail Ekstraksi:**
 
@@ -419,7 +588,192 @@ Tombol **🔬 Analisa Data** memungkinkan Anda mengambil data dari dalam setiap 
 
 ---
 
-### 5. Pengaturan
+### 6. Cek NO KK
+
+**Fungsi**: Ekstrak dan validasi Nomor Kartu Keluarga (NO KK) dari file PDF menggunakan OCR
+
+#### Prasyarat
+
+- **Tesseract OCR** harus terinstall di sistem
+  - Download: https://github.com/UB-Mannheim/tesseract/wiki
+  - Lokasi default: `C:\Program Files\Tesseract-OCR\tesseract.exe`
+- **Poppler** (sudah dibundle dengan aplikasi)
+- **Database**: File `database.xlsx` harus sudah ada (hasil scan folder arsip)
+
+#### Cara Kerja
+
+1. **Membaca Database**
+
+   - Lokasi: `C:\Users\[Username]\AppData\Local\ArsipDigitalOwnCloud\database.xlsx`
+   - Sheet: `02.DATA_ANGGOTA`
+   - Filter: File PDF yang diawali dengan `02` (Data Kartu Keluarga)
+
+2. **Ekstraksi OCR**
+
+   - Konversi PDF ke Image (DPI 400)
+   - Crop header 20% (fokus ke area NO KK)
+   - Deskew otomatis (koreksi rotasi -20° hingga +20°)
+   - Enhance kontras 3x dan ketajaman 2x
+   - Binarisasi untuk OCR optimal
+   - OCR dengan digit whitelist only
+
+3. **Koreksi Karakter**
+
+   - `b` → `6`, `B` → `8`
+   - `O`, `o` → `0`
+   - `l`, `I` → `1`
+   - `S` → `5`, `Z` → `2`
+
+4. **Validasi Format**
+   - Panjang: 16 digit
+   - Isi: Angka semua
+   - Handle konversi 17→16 digit
+
+#### Fitur
+
+- ⏸️ **Pause/Resume** - OCR lambat? Pause dulu!
+- 📊 **Treeview 10 Kolom**:
+  1. No
+  2. NO KK (hasil ekstraksi)
+  3. Status (Valid/Invalid)
+  4. Panjang (jumlah digit)
+  5. Format (Numerik/Non-Numerik)
+  6. Keterangan (detail error)
+  7. Nama Anggota
+  8. Nomor Center
+  9. Status File (✅ Ada / ❌ Tidak Ada)
+  10. Path
+- 📥 **Export ke Excel** dengan 2 sheet:
+  - `Data` - Hasil pengecekan lengkap
+  - `Summary` - Statistik (Total, Valid, Invalid, %)
+
+#### Status File
+
+- ✅ **Ada** - File PDF ditemukan, OCR dijalankan
+- ❌ **Tidak Ada** - File tidak ditemukan di PATH
+- 🚫 **NO KK Tidak Ditemukan** - OCR gagal ekstrak NO KK
+
+#### Use Cases
+
+1. **Validasi Data KK** - Pastikan semua NO KK valid 16 digit
+2. **Cek File Missing** - Identifikasi file yang hilang
+3. **Quality Control** - Audit kualitas data sebelum upload
+4. **Data Correction** - Export list NO KK invalid untuk perbaikan
+
+#### Tips
+
+- **File Missing**: Status File akan otomatis tracking file yang tidak ada
+- **OCR Gagal**: Check kualitas scan PDF (resolusi minimal 300 DPI)
+- **Proses Lama**: Gunakan Pause untuk istirahat, lanjut Resume
+- **Rotasi**: Deskew otomatis handle KK yang miring hingga ±20°
+
+---
+
+### 7. PDF Tool
+
+**Fungsi**: Toolbox lengkap untuk manipulasi file PDF
+
+#### Fitur Utama (Layout 2 Kolom)
+
+**Kolom Kiri:**
+
+1. 🖼️ **Images to PDF** - Gabung multiple gambar jadi 1 PDF
+2. 📄 **PDF to Images** - Extract semua halaman PDF ke gambar
+3. ➕ **Merge PDF** - Gabung multiple PDF jadi 1 file
+4. ✂️ **Split PDF** - Pisah PDF per halaman atau range
+
+**Kolom Kanan:** 5. 🗜️ **Compress PDF** - Kurangi ukuran PDF 6. 🔄 **Rotate PDF** - Putar halaman PDF (90°, 180°, 270°) 7. 🔐 **Protect PDF** - Password protect PDF 8. 🔓 **Unlock PDF** - Hapus password dari PDF
+
+#### Detail Fitur
+
+##### 1. 🖼️ Images to PDF
+
+- **Input**: Multiple gambar (JPG, PNG, BMP, TIFF, GIF)
+- **Output**: 1 file PDF
+- **Fitur**:
+  - Drag & drop urutan gambar
+  - Preview image
+  - Custom page size (A4, Letter, Legal, atau Custom)
+  - Quality control
+
+##### 2. 📄 PDF to Images
+
+- **Input**: 1 file PDF
+- **Output**: Multiple gambar (PNG default)
+- **Fitur**:
+  - Pilih format output (PNG, JPG, TIFF, BMP)
+  - Custom DPI (72-600)
+  - Extract all pages atau specific range
+  - Output folder selection
+- **Membutuhkan**: Poppler (sudah dibundle)
+
+##### 3. ➕ Merge PDF
+
+- **Input**: Multiple file PDF
+- **Output**: 1 file PDF merged
+- **Fitur**:
+  - Drag & drop untuk urutan
+  - Preview setiap PDF
+  - Bookmark otomatis per file
+
+##### 4. ✂️ Split PDF
+
+- **Input**: 1 file PDF
+- **Output**: Multiple PDF
+- **Mode**:
+  - **Per Halaman**: 1 file = 1 halaman
+  - **Range**: Tentukan range halaman (e.g., 1-5, 10-15)
+  - **Custom Split**: Batch split dengan pattern
+
+##### 5. 🗜️ Compress PDF
+
+- **Input**: 1 file PDF
+- **Output**: PDF terkompress
+- **Level Kompresi**:
+  - Low (kualitas tinggi, kompresi rendah)
+  - Medium (balanced)
+  - High (kualitas rendah, kompresi tinggi)
+- **Preview**: Tampilkan ukuran before/after
+
+##### 6. 🔄 Rotate PDF
+
+- **Input**: 1 file PDF
+- **Rotasi**: 90°, 180°, 270° (clockwise)
+- **Mode**:
+  - All Pages
+  - Specific Range
+  - Odd/Even Pages Only
+
+##### 7. 🔐 Protect PDF
+
+- **Input**: 1 file PDF
+- **Output**: PDF dengan password
+- **Password**: User password & Owner password
+- **Permissions**: Set permission (print, copy, modify)
+
+##### 8. 🔓 Unlock PDF
+
+- **Input**: PDF yang diprotect
+- **Requirement**: Masukkan password
+- **Output**: PDF tanpa password
+
+#### Dependencies
+
+- **PyPDF2**: Merge, Split, Rotate, Protect, Unlock
+- **Pillow**: Images to PDF
+- **pdf2image + Poppler**: PDF to Images
+- **ReportLab**: PDF generation untuk Images to PDF
+
+#### Tips & Tricks
+
+- **Compress**: Coba Medium dulu sebelum High
+- **PDF to Images**: DPI 300 untuk print quality, 150 untuk web
+- **Merge PDF**: Urutan penting! Cek preview sebelum merge
+- **Poppler**: Sudah dibundle, tidak perlu install terpisah
+
+---
+
+### 8. Pengaturan
 
 **Fungsi**: Konfigurasi default folder untuk semua form
 
@@ -443,11 +797,13 @@ Tombol **🔬 Analisa Data** memungkinkan Anda mengambil data dari dalam setiap 
    ```
    Menu → ⚙️ Pengaturan → 📂 Pilih Folder Default
    ```
+
 2. **Test di Form Lain**
 
    - Buka salah satu form
    - Klik "Browse Folder"
    - Dialog otomatis ke default folder
+
 3. **Hapus Default** (jika diperlukan)
 
    ```
@@ -494,8 +850,8 @@ ARSIPOWNCLOUD/
 
 ### Config Files
 
-| File                 | Deskripsi                  | Git        |
-| -------------------- | -------------------------- | ---------- |
+| File               | Deskripsi                  | Git        |
+| ------------------ | -------------------------- | ---------- |
 | `app_config.json`  | Konfigurasi default folder | ❌ Ignored |
 | `file_export.xlsx` | File export hasil scan     | ❌ Ignored |
 | `requirements.txt` | Python dependencies        | ✅ Tracked |
@@ -508,9 +864,33 @@ ARSIPOWNCLOUD/
 ### Runtime Dependencies
 
 ```txt
-pandas>=2.0.0
-openpyxl>=3.1.0
+# Core
+pandas>=2.3.3
+openpyxl>=3.1.5
+numpy>=2.2.6
+
+# PDF & OCR
+PyPDF2>=3.0.1
+pdf2image>=1.17.0
+pytesseract>=0.3.10
+Pillow>=12.0.0
+
+# QR Code
+qrcode>=8.0
 ```
+
+### External Dependencies
+
+| Tool              | Purpose                  | Status      | Download                                                  |
+| ----------------- | ------------------------ | ----------- | --------------------------------------------------------- |
+| **Poppler**       | PDF to Images conversion | ✅ Bundled  | Included in build                                         |
+| **Tesseract OCR** | OCR engine for Cek NO KK | ⚠️ Required | [Download](https://github.com/UB-Mannheim/tesseract/wiki) |
+
+**Note:**
+
+- Poppler sudah dibundle dengan aplikasi di `poppler-25.07.0/`
+- Tesseract OCR harus diinstall manual untuk fitur Cek NO KK
+- Lokasi default Tesseract: `C:\Program Files\Tesseract-OCR\tesseract.exe`
 
 ### Built-in Modules
 
@@ -535,6 +915,29 @@ pip install -r requirements.txt
 
 ## 🔨 Build Executable
 
+### Persiapan Build dengan Poppler (untuk PDF → Images)
+
+**Penting!** Jika ingin fitur PDF → Images bekerja di exe, siapkan folder Poppler:
+
+```bash
+# 1. Download Poppler dari:
+# https://github.com/oschwartz10612/poppler-windows/releases/
+
+# 2. Extract dan letakkan di root project dengan nama: poppler-25.07.0
+# Struktur folder harus seperti ini:
+ARSIPOWNCLOUD/
+├── main.py
+├── poppler-25.07.0/           <-- Folder ini
+│   └── Library/
+│       └── bin/
+│           ├── pdftoppm.exe
+│           ├── pdfimages.exe
+│           └── ...
+└── ...
+
+# 3. Folder ini akan otomatis di-bundle saat build!
+```
+
 ### Opsi 1: cx_Freeze (RECOMMENDED)
 
 ```bash
@@ -542,9 +945,10 @@ pip install -r requirements.txt
 pip install cx-Freeze
 
 # 2. Build portable version
-.\build_portable.bat
+.\build_cxfreeze.bat
 
-# Output: ArsipOwncloud_Portable\ArsipOwncloud.exe
+# Output: build\exe.win-amd64-3.10\ArsipOwncloud.exe
+# Termasuk: src_web, app_config.json, poppler-25.07.0 (jika ada)
 ```
 
 **Keuntungan cx_Freeze:**
@@ -552,6 +956,13 @@ pip install cx-Freeze
 - ✅ Compatible dengan pandas & numpy
 - ✅ Portable folder (bisa di-copy)
 - ✅ Include semua dependencies
+- ✅ **Auto-bundle Poppler** untuk PDF → Images
+
+**Isi Build:**
+
+- `src_web/` → Web server templates & static files
+- `app_config.json` → Default configuration
+- `poppler-25.07.0/` → PDF to Images converter (jika folder ada)
 
 ### Opsi 2: PyInstaller
 
@@ -573,11 +984,13 @@ pyinstaller --onefile --windowed --name "ArsipOwncloud" main.py
 
 - ⚠️ Mungkin conflict dengan numpy/torch
 - ⚠️ Perlu cleanup dependencies
+- ⚠️ Poppler tidak auto-bundle (perlu manual add)
 
 ### Build Scripts
 
-| Script                 | Deskripsi                                |
-| ---------------------- | ---------------------------------------- |
+| Script               | Deskripsi                                |
+| -------------------- | ---------------------------------------- |
+| `build_cxfreeze.bat` | Build dengan cx_Freeze + Poppler (BEST)  |
 | `build_portable.bat` | Build dengan cx_Freeze (portable folder) |
 | `build_simple.bat`   | Build sederhana cx_Freeze                |
 | `build_exe.bat`      | Build dengan PyInstaller                 |
@@ -780,6 +1193,47 @@ A: Saat double-click, muncul error "File Tidak Ditemukan". Scan ulang untuk refr
 **Q: Apakah bisa filter hasil scan?**
 A: Saat ini belum ada fitur filter built-in. Bisa filter manual di Excel hasil export.
 
+### Cek NO KK
+
+**Q: Kenapa OCR tidak mendeteksi NO KK?**
+A: Pastikan:
+
+- Tesseract OCR sudah terinstall
+- File PDF bukan hasil scan dengan resolusi rendah (minimal 300 DPI)
+- NO KK ada di header (20% bagian atas)
+- Gunakan fitur Deskew jika gambar miring
+
+**Q: File saya ada tapi Status File menunjukkan "Tidak Ada"?**
+A: Path di database.xlsx mungkin sudah berubah. Scan ulang folder arsip untuk update path.
+
+**Q: OCR lambat, apakah normal?**
+A: Ya, OCR + preprocessing memakan waktu. Gunakan Pause/Resume untuk istirahat.
+
+**Q: Di mana file database.xlsx disimpan?**
+A: `C:\Users\[Username]\AppData\Local\ArsipDigitalOwnCloud\database.xlsx`
+
+### PDF Tool
+
+**Q: PDF to Images error "Poppler not found"?**
+A: Poppler sudah dibundle di aplikasi portable. Jika run dari source, download Poppler dan letakkan di folder project.
+
+**Q: Compress PDF tidak mengecilkan ukuran?**
+A: Compress hanya rewrite PDF structure. Untuk image-heavy PDF, coba reduce image quality dulu sebelum buat PDF.
+
+**Q: Kenapa Merge PDF urutan salah?**
+A: Urutan sesuai pilihan file dialog. Pastikan pilih file dalam urutan yang benar (gunakan Ctrl+Click untuk multiple select berurutan).
+
+### AppData Storage
+
+**Q: Kenapa database.xlsx tidak ada di folder aplikasi?**
+A: Sejak v1.1.5, semua file data disimpan di AppData (`C:\Users\[Username]\AppData\Local\ArsipDigitalOwnCloud`) sesuai Windows best practice.
+
+**Q: Bagaimana cara backup data?**
+A: Backup folder `C:\Users\[Username]\AppData\Local\ArsipDigitalOwnCloud` secara manual atau gunakan Windows Backup.
+
+**Q: Apakah setiap user Windows perlu scan ulang?**
+A: Ya, karena setiap user punya folder AppData sendiri (user isolation).
+
 ---
 
 ## 📞 Support & Contact
@@ -794,20 +1248,53 @@ Untuk pertanyaan, bug report, atau feature request:
 
 ## 📝 Version History
 
-| Version         | Date     | Changes                                        |
-| --------------- | -------- | ---------------------------------------------- |
-| **1.0.0** | Sep 2024 | Initial release dengan Scan Folder             |
-| **1.0.1** | Sep 2024 | Fitur Scan File Besar (fixed)                  |
-| **1.0.2** | Sep 2024 | Parameter ukuran minimum, filter owncloud sync |
-| **1.0.3** | Sep 2024 | Dual-mode: File Besar + Format Non-Dokumen     |
-| **1.0.4** | Okt 2024 | Fitur Pengaturan & Default Folder              |
-| **1.0.5** | Okt 2024 | Fitur Cek Pengajuan Dana + Quick Open          |
+| Version   | Date     | Changes                                                |
+| --------- | -------- | ------------------------------------------------------ |
+| **1.0.0** | Sep 2024 | Initial release dengan Scan Folder                     |
+| **1.0.1** | Sep 2024 | Fitur Scan File Besar (fixed)                          |
+| **1.0.2** | Sep 2024 | Parameter ukuran minimum, filter owncloud sync         |
+| **1.0.3** | Sep 2024 | Dual-mode: File Besar + Format Non-Dokumen             |
+| **1.0.4** | Okt 2024 | Fitur Pengaturan & Default Folder                      |
+| **1.0.5** | Okt 2024 | Fitur Cek Pengajuan Dana + Quick Open                  |
+| **1.1.0** | Okt 2025 | PDF Tool (8 fitur), Universal Scan Database            |
+| **1.1.5** | Okt 2025 | Cek NO KK (OCR), AppData storage, Inno Setup installer |
+
+### Changelog v1.1.5
+
+**🆕 Fitur Baru:**
+
+- ✅ **Cek NO KK** - Ekstrak dan validasi Nomor Kartu Keluarga dari PDF menggunakan OCR
+  - Auto deskew untuk KK yang miring
+  - Character correction (b→6, O→0, etc.)
+  - Pause/Resume untuk proses yang lama
+  - Track file missing dengan Status File column
+- ✅ **PDF Tool Lengkap** - 8 fitur PDF tools
+  - Images to PDF, PDF to Images
+  - Merge, Split, Compress
+  - Rotate, Protect, Unlock PDF
+- ✅ **Universal Scan Database** - Scan komprehensif dengan auto-detect structure
+- ✅ **AppData Storage** - File database dan export disimpan di AppData Local
+- ✅ **Inno Setup Script** - Installer profesional untuk distribusi
+
+**🔧 Perbaikan:**
+
+- ✅ Poppler bundled dengan aplikasi (tidak perlu install terpisah untuk PDF→Images)
+- ✅ Auto-detect Tesseract path (3 lokasi default)
+- ✅ Responsive UI dengan layout 2 kolom
+- ✅ Error messages lebih informatif dengan full path
+
+**📦 Dependencies Update:**
+
+- numpy 2.2.6 (untuk deskew algorithm)
+- pytesseract 0.3.10 (OCR engine)
+- pdf2image 1.17.0 (PDF conversion)
+- Pillow 12.0.0 (image processing)
 
 ---
 
 ## 📄 License
 
-Copyright © 2024-2025 Riky Dwianto
+Copyright © 2025 Riky Dwianto
 
 Aplikasi ini untuk penggunaan internal organisasi. Tidak untuk distribusi komersial.
 
@@ -815,11 +1302,16 @@ Aplikasi ini untuk penggunaan internal organisasi. Tidak untuk distribusi komers
 
 ## 🙏 Credits
 
-- **Framework**: Python + Tkinter
-- **Data Processing**: pandas + openpyxl
-- **Build Tool**: cx_Freeze
+- **Framework**: Python 3.10 + Tkinter
+- **Data Processing**: pandas 2.3.3 + openpyxl 3.1.5 + numpy 2.2.6
+- **PDF Tools**: PyPDF2 3.0.1 + Pillow 12.0.0 + pdf2image 1.17.0
+- **OCR Engine**: pytesseract 0.3.10 + Tesseract OCR
+- **PDF Renderer**: Poppler 25.07.0 (bundled)
+- **QR Code**: qrcode 8.0
+- **Build Tool**: cx_Freeze 8.4.1
+- **Installer**: Inno Setup 6.x
 - **Developer**: Riky Dwianto
 
 ---
 
-**Last Updated**: Oktober 17, 2025
+**Last Updated**: Oktober 30, 2025

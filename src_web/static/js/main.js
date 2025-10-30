@@ -116,138 +116,173 @@ document.addEventListener("DOMContentLoaded", function () {
   console.log("🚀 API Routes: /api/hello, /api/status, /api/server-info");
 });
 
-
-$(document).ready(function() {
-  $('.btn-submit').hide();
-  $('.select2').select2();
+$(document).ready(function () {
+  $(".btn-submit").hide();
+  $(".select2").select2();
   $("#nomor_center").empty();
   $("#nomor_center").append('<option value="">Memuat...</option>');
-  function loadNoCenter(){
+  function loadNoCenter() {
     $.ajax({
-    url: '/api/data_center',
-    method: 'GET',
-    dataType: 'json',
-    success: function(respon) {
-      data = respon.data;
-      $("#nomor_center").empty();
-      $("#nomor_center").append('<option value="">Pilih Nomor</option>');
-      data.forEach(function(item) {
-        $("#nomor_center").append('<option value="' + item + '">' + item + '</option>');
-      });
-    },
-    error: function() {
-      $("#nomor_center").empty();
-      $("#nomor_center").append('<option value="">Gagal memuat data</option>');
-    }
-  });
+      url: "/api/data_center",
+      method: "GET",
+      dataType: "json",
+      success: function (respon) {
+        data = respon.data;
+        $("#nomor_center").empty();
+        $("#nomor_center").append('<option value="">Pilih Nomor</option>');
+        data.forEach(function (item) {
+          $("#nomor_center").append(
+            '<option value="' + item + '">' + item + "</option>"
+          );
+        });
+      },
+      error: function () {
+        $("#nomor_center").empty();
+        $("#nomor_center").append(
+          '<option value="">Gagal memuat data</option>'
+        );
+      },
+    });
   }
   loadNoCenter();
-  $("#nomor_center").on('click', function() {
+  $("#nomor_center").on("click", function () {
     loadNoCenter();
   });
-  $("#nomor_center").on('change', function() {
+  $("#nomor_center").on("change", function () {
     var selectedValue = $(this).val();
     console.log("Nomor Center dipilih: " + selectedValue);
   });
-  function getAnggotaByCenter(nomor_center){
-     $.ajax({
-      url: '/api/data_center/' + nomor_center,
-      method: 'GET',
-      dataType: 'json',
-      success: function(respon) {
+  function getAnggotaByCenter(nomor_center) {
+    $.ajax({
+      url: "/api/data_center/" + nomor_center,
+      method: "GET",
+      dataType: "json",
+      success: function (respon) {
         data = respon.data;
         id_nama.empty();
         id_nama.append('<option value="">Pilih Anggota</option>');
-        data.forEach(function(item) {
-          id_nama.append('<option value="' + item.ID_NAMA_ANGGOTA + '">' + item.NOMOR_CENTER  + ' - ' + item.ID_NAMA_ANGGOTA + '</option>');
+        data.forEach(function (item) {
+          id_nama.append(
+            '<option value="' +
+              item.ID_NAMA_ANGGOTA +
+              '">' +
+              item.NOMOR_CENTER +
+              " - " +
+              item.ID_NAMA_ANGGOTA +
+              "</option>"
+          );
         });
       },
-      error: function() {
+      error: function () {
         id_nama.empty();
         id_nama.append('<option value="">Gagal memuat data anggota</option>');
-      }
+      },
     });
   }
   var id_nama = $("#id_anggota");
   id_nama.empty();
   id_nama.append('<option value="">Pilih Center dulu...</option>');
-  $("#nomor_center").on('change', function() {
+  $("#nomor_center").on("change", function () {
     var selectedNoCenter = $(this).val();
     id_nama.empty();
-    id_nama.append('<option value="">Memuat anggota center ' + selectedNoCenter + ' ...</option>');
+    id_nama.append(
+      '<option value="">Memuat anggota center ' +
+        selectedNoCenter +
+        " ...</option>"
+    );
     getAnggotaByCenter(selectedNoCenter);
   });
-  $("#id_anggota").on('change', function() {
+  $("#id_anggota").on("change", function () {
+    $(".btn-submit").hide();
     var selectedValue = $(this).val();
     $.ajax({
-      url: '/api/anggota/' + selectedValue,
-      method: 'GET',
-      success: function(respon) {
+      url: "/api/anggota/" + selectedValue,
+      method: "GET",
+      success: function (respon) {
         // Lakukan sesuatu dengan data anggota yang diterima
         data = respon.data[0];
         $("#folder").val(data.PATH);
-        $('.btn-submit').show();
+        $(".btn-submit").show();
       },
-      error: function() {
+      error: function () {
         console.error("Gagal memuat data anggota");
+      },
+    });
+  });
+  function resetAnggotaForm() {
+    $("#form-anggota-keluar")[0].reset();
+    $(".btn-submit").hide();
+    $("#id_anggota").empty();
+    $("#id_anggota").append('<option value="">Pilih Center dulu...</option>');
+  }
+  $(".btn-submit").on("click", function (e) {
+    e.preventDefault(); // cegah reload
+
+    var form = $("#form-anggota-keluar")[0];
+    var formData = new FormData(form); // ambil semua input termasuk file
+
+    var tgl_keluar = $("#tanggal_keluar").val();
+    if (!tgl_keluar) {
+      Swal.fire({
+        title: "Peringatan",
+        text: "Tanggal keluar harus diisi.",
+        icon: "warning",
+        confirmButtonText: "OK",
+      });
+      return;
+    }
+
+    Swal.fire({
+      title: "Konfirmasi",
+      text: "Apakah Anda yakin ingin menyimpan data ini?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Ya, simpan",
+      cancelButtonText: "Batal",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        $.ajax({
+          url: "/api/anggota_keluar", // ganti dengan endpoint backend kamu
+          type: "POST",
+          data: formData,
+          processData: false, // penting agar FormData tidak diubah ke query string
+          contentType: false, // biarkan browser set otomatis
+          success: function (response) {
+            if (response.success) {
+              Swal.fire({
+                title: "Berhasil!",
+                text: "Data berhasil disimpan.",
+                icon: "success",
+                confirmButtonText: "OK",
+              });
+              resetAnggotaForm();
+            } else {
+              Swal.fire({
+                title: "Gagal!",
+                text:
+                  response.message || "Terjadi kesalahan saat menyimpan data.",
+                icon: "error",
+                confirmButtonText: "OK",
+              });
+            }
+            console.log("Response:", response);
+          },
+          error: function (xhr, status, error) {
+            console.error("Error:", error);
+            data = xhr.responseJSON;
+
+            Swal.fire({
+              title: "Gagal!",
+              text: data.message || "Terjadi kesalahan saat menyimpan data.",
+              icon: "error",
+              confirmButtonText: "OK",
+            });
+            console.error("Error:", error);
+          },
+        });
       }
     });
   });
-  $(".btn-submit").on('click', function(e) {
-  e.preventDefault(); // cegah reload
-
-  var form = $("#form-anggota-keluar")[0];
-  var formData = new FormData(form); // ambil semua input termasuk file
-
-  var tgl_keluar = $("#tanggal_keluar").val();
-  if (!tgl_keluar) {
-    Swal.fire({
-      title: 'Peringatan',
-      text: "Tanggal keluar harus diisi.",
-      icon: 'warning',
-      confirmButtonText: 'OK'
-    });
-    return;
-  }
-
-  Swal.fire({
-    title: 'Konfirmasi',
-    text: "Apakah Anda yakin ingin menyimpan data ini?",
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#3085d6',
-    cancelButtonColor: '#d33',
-    confirmButtonText: 'Ya, simpan',
-    cancelButtonText: 'Batal',
-  }).then((result) => {
-    if (result.isConfirmed) {
-      $.ajax({
-        url: '/api/anggota_keluar', // ganti dengan endpoint backend kamu
-        type: 'POST',
-        data: formData,
-        processData: false, // penting agar FormData tidak diubah ke query string
-        contentType: false, // biarkan browser set otomatis
-        success: function(response) {
-          Swal.fire({
-            title: 'Berhasil!',
-            text: 'Data berhasil disimpan.',
-            icon: 'success',
-            confirmButtonText: 'OK'
-          });
-          console.log("Response:", response);
-        },
-        error: function(xhr, status, error) {
-          Swal.fire({
-            title: 'Gagal!',
-            text: 'Terjadi kesalahan saat menyimpan data.',
-            icon: 'error',
-            confirmButtonText: 'OK'
-          });
-          console.error("Error:", error);
-        }
-      });
-    }
-  });
-});
-
 });

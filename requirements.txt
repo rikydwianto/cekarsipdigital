@@ -8,5 +8,8 @@ qrcode[pil]>=8.0
 
 # Optional packages yang mungkin dibutuhkan untuk pengembangan selanjutnya:
 # pillow>=9.0.0  # untuk manipulasi gambar (sudah terinstall via qrcode[pil])
-# PyPDF2>=3.0.0  # untuk membaca file PDF
+PyPDF2>=3.0.0  # untuk membaca dan manipulasi file PDF
+pdf2image>=1.16.0  # untuk konversi PDF ke gambar (requires poppler binary)
+pytesseract>=0.3.10  # untuk OCR ekstraksi teks dari gambar/PDF
+numpy>=1.24.0  # untuk image processing dan deskew
 # python-docx>=0.8.0  # untuk membaca file Word
