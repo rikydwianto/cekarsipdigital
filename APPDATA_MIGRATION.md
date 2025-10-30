@@ -1,4 +1,4 @@
-# 📁 AppData Storage Migration (v1.1.7)
+﻿# 📁 AppData Storage Migration (v1.1.7)
 
 ## 🎯 Overview
 
@@ -7,6 +7,7 @@ Version 1.1.7 memindahkan semua file konfigurasi dan database ke **AppData Local
 ## 📦 Files Moved to AppData
 
 ### Before (v1.1.6)
+
 ```
 D:\PROJECT\PYTHON\ARSIPOWNCLOUD\
 ├── app_config.json                    ❌ Mixed with source code
@@ -16,8 +17,9 @@ D:\PROJECT\PYTHON\ARSIPOWNCLOUD\
 ```
 
 ### After (v1.1.7)
+
 ```
-C:\Users\[Username]\AppData\Local\ArsipDigitalOwnCloud\
+C:\Users\[Username]\AppData\Local\ToolKomida\
 ├── app_config.json                    ✅ Configuration
 ├── universal_scan_database.xlsx       ✅ Universal scan data
 ├── database.xlsx                      ✅ Arsip scan data
@@ -29,6 +31,7 @@ C:\Users\[Username]\AppData\Local\ArsipDigitalOwnCloud\
 ### 1. **app_helpers.py**
 
 Added helper functions:
+
 ```python
 def get_config_path():
     """Get full path untuk app_config.json di AppData"""
@@ -40,6 +43,7 @@ def get_universal_scan_database_path():
 ```
 
 Updated ConfigManager:
+
 ```python
 class ConfigManager:
     def __init__(self):
@@ -50,6 +54,7 @@ class ConfigManager:
 ### 2. **app_arsip.py**
 
 UniversalScanApp now uses AppData:
+
 ```python
 def __init__(self, root, parent_window=None):
     # ...
@@ -61,6 +66,7 @@ def __init__(self, root, parent_window=None):
 ### 3. **web_server.py**
 
 WebServerManager uses AppData config:
+
 ```python
 def __init__(self, config_file=None):
     # ...
@@ -73,21 +79,25 @@ def __init__(self, config_file=None):
 ## ✨ Benefits
 
 ### 🔒 Security & Best Practices
+
 - ✅ **No Admin Required**: User can write without elevated privileges
 - ✅ **Program Files Protection**: No write to Program Files folder
 - ✅ **Windows Standards**: Follows Microsoft guidelines
 
 ### 👥 Multi-User Support
+
 - ✅ **User Isolation**: Each Windows user has separate data
 - ✅ **Profile-Based**: Data follows user profile
 - ✅ **No Conflicts**: Multiple users on same PC don't interfere
 
 ### 💾 Data Management
+
 - ✅ **Automatic Backup**: Included in Windows Backup
 - ✅ **Easy Location**: Standard AppData location
 - ✅ **Clean Uninstall**: Remove app without leaving data in Program Files
 
 ### 📁 Project Organization
+
 - ✅ **Clean Source**: No data files mixed with code
 - ✅ **Git Friendly**: No need to gitignore data files in project
 - ✅ **Portable Build**: Executable doesn't carry user data
@@ -95,7 +105,9 @@ def __init__(self, config_file=None):
 ## 🔄 Migration Path
 
 ### Automatic Migration
+
 The application will:
+
 1. Check if files exist in old location (project root)
 2. Auto-create new files in AppData if needed
 3. Users can manually move existing data if desired
@@ -107,18 +119,20 @@ If you have existing data in project root:
 1. **Close the application**
 
 2. **Copy files to AppData:**
+
    ```powershell
    # Open PowerShell
-   $appdata = "$env:LOCALAPPDATA\ArsipDigitalOwnCloud"
-   
+   $appdata = "$env:LOCALAPPDATA\ToolKomida"
+
    # Copy config
    Copy-Item "D:\PROJECT\PYTHON\ARSIPOWNCLOUD\app_config.json" $appdata
-   
+
    # Copy database
    Copy-Item "D:\PROJECT\PYTHON\ARSIPOWNCLOUD\universal_scan_database.xlsx" $appdata
    ```
 
 3. **Delete old files from project root:**
+
    ```powershell
    Remove-Item "D:\PROJECT\PYTHON\ARSIPOWNCLOUD\app_config.json"
    Remove-Item "D:\PROJECT\PYTHON\ARSIPOWNCLOUD\universal_scan_database.xlsx"
@@ -129,23 +143,27 @@ If you have existing data in project root:
 ## 📍 Access AppData Folder
 
 ### Method 1: Keyboard Shortcut
+
 1. Press `Win + R`
-2. Type: `%LOCALAPPDATA%\ArsipDigitalOwnCloud`
+2. Type: `%LOCALAPPDATA%\ToolKomida`
 3. Press Enter
 
 ### Method 2: File Explorer
+
 1. Open File Explorer
-2. Navigate to: `C:\Users\[YourUsername]\AppData\Local\ArsipDigitalOwnCloud`
+2. Navigate to: `C:\Users\[YourUsername]\AppData\Local\ToolKomida`
 3. (Enable "Show hidden files" if needed)
 
 ### Method 3: PowerShell
+
 ```powershell
-explorer "$env:LOCALAPPDATA\ArsipDigitalOwnCloud"
+explorer "$env:LOCALAPPDATA\ToolKomida"
 ```
 
 ## 🧪 Testing
 
 Tested scenarios:
+
 - ✅ Fresh install (no existing data)
 - ✅ Config creation in AppData
 - ✅ Database creation in AppData
@@ -156,35 +174,43 @@ Tested scenarios:
 
 ## 📊 File Locations Reference
 
-| File                             | Location                                                    |
-| -------------------------------- | ----------------------------------------------------------- |
-| `app_config.json`                | `%LOCALAPPDATA%\ArsipDigitalOwnCloud\app_config.json`       |
-| `database.xlsx`                  | `%LOCALAPPDATA%\ArsipDigitalOwnCloud\database.xlsx`         |
-| `file_export.xlsx`               | `%LOCALAPPDATA%\ArsipDigitalOwnCloud\file_export.xlsx`      |
-| `universal_scan_database.xlsx`   | `%LOCALAPPDATA%\ArsipDigitalOwnCloud\universal_scan_database.xlsx` |
+| File                           | Location                                                           |
+| ------------------------------ | ------------------------------------------------------------------ |
+| `app_config.json`              | `%LOCALAPPDATA%\ToolKomida\app_config.json`              |
+| `database.xlsx`                | `%LOCALAPPDATA%\ToolKomida\database.xlsx`                |
+| `file_export.xlsx`             | `%LOCALAPPDATA%\ToolKomida\file_export.xlsx`             |
+| `universal_scan_database.xlsx` | `%LOCALAPPDATA%\ToolKomida\universal_scan_database.xlsx` |
 
 ## 🔍 Troubleshooting
 
 ### Issue: Cannot find AppData folder
-**Solution**: 
+
+**Solution**:
+
 - Folder is hidden by default
 - Enable "Show hidden files" in File Explorer
 - Or use `Win + R` → `%LOCALAPPDATA%`
 
 ### Issue: Permission denied
+
 **Solution**:
+
 - AppData should always be writable by current user
 - Check if antivirus is blocking
 - Run as administrator only if absolutely necessary
 
 ### Issue: Data not persisting
+
 **Solution**:
-- Check if folder exists: `%LOCALAPPDATA%\ArsipDigitalOwnCloud`
+
+- Check if folder exists: `%LOCALAPPDATA%\ToolKomida`
 - Verify write permissions
 - Check disk space
 
 ### Issue: Multiple users seeing same data
+
 **Solution**:
+
 - This should not happen with AppData
 - Each user has separate `C:\Users\[Username]\AppData`
 - Verify you're not using network/roaming profiles incorrectly
@@ -192,16 +218,19 @@ Tested scenarios:
 ## 🚀 Future Considerations
 
 ### Cloud Sync (Future)
+
 - Consider OneDrive/Dropbox integration
 - Add export/import functionality
 - Implement data synchronization
 
 ### Backup Strategy
+
 - Automatic backup to secondary location
 - Export configuration as JSON
 - Database backup scheduling
 
 ### Performance
+
 - Monitor AppData folder size
 - Implement cleanup routines
 - Add compression for large databases

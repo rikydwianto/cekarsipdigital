@@ -1,6 +1,6 @@
-﻿# ðŸ“ ARSIP OWNCLOUD - Aplikasi Manajemen Arsip Digital
+﻿# ðŸ“ TOOL KOMIDA - Aplikasi Manajemen Arsip Digital
 
-> Aplikasi desktop berbasis Python untuk manajemen, scanning, dan analisis arsip digital Owncloud
+> Aplikasi desktop berbasis Python untuk manajemen, scanning, dan analisis arsip digital
 
 **Versi**: 1.1.7 ðŸ†•
 **Tanggal**: Oktober 2025
@@ -46,7 +46,7 @@
 
 ## ðŸŽ¯ Deskripsi Umum
 
-Aplikasi **ARSIP OWNCLOUD** adalah sistem manajemen arsip digital yang dirancang untuk membantu organisasi dalam:
+Aplikasi **TOOL KOMIDA** adalah sistem manajemen arsip digital yang dirancang untuk membantu organisasi dalam:
 
 - âœ… **Validasi Struktur Arsip** - Memastikan folder arsip sesuai standar
 - ðŸ“Š **Export ke Excel** - Membuat laporan lengkap dengan hyperlink
@@ -171,7 +171,7 @@ ArsipOwncloud.exe
 Aplikasi menyimpan file database dan export di **AppData Local** sesuai Windows best practice:
 
 ```
-C:\Users\[Username]\AppData\Local\ArsipDigitalOwnCloud\
+C:\Users\[Username]\AppData\Local\ToolKomida\
 â”œâ”€â”€ database.xlsx                    # Database hasil scan (Arsip Digital)
 â”œâ”€â”€ file_export.xlsx                 # File export matching data
 â”œâ”€â”€ app_config.json                  # Konfigurasi aplikasi
@@ -183,14 +183,14 @@ C:\Users\[Username]\AppData\Local\ArsipDigitalOwnCloud\
 **Metode 1: Keyboard Shortcut**
 
 1. Tekan `Win + R`
-2. Ketik: `%LOCALAPPDATA%\ArsipDigitalOwnCloud`
+2. Ketik: `%LOCALAPPDATA%\ToolKomida`
 3. Tekan Enter
 
 **Metode 2: File Explorer**
 
 1. Buka File Explorer
 2. Enable "Show hidden files" di View options
-3. Navigate ke: `C:\Users\[YourUsername]\AppData\Local\ArsipDigitalOwnCloud`
+3. Navigate ke: `C:\Users\[YourUsername]\AppData\Local\ToolKomida`
 
 ### Mengapa AppData?
 
@@ -345,7 +345,7 @@ Aplikasi memiliki menu utama dengan 8 tombol dalam layout 2 kolom:
 
 3. **Generate Database**
    - Buat `database.xlsx` di AppData
-   - Lokasi: `C:\Users\[Username]\AppData\Local\ArsipDigitalOwnCloud\database.xlsx`
+   - Lokasi: `C:\Users\[Username]\AppData\Local\ToolKomida\database.xlsx`
    - Multiple sheet sesuai struktur folder
 
 #### Output Database Structure
@@ -606,7 +606,7 @@ Tombol **ðŸ”¬ Analisa Data** memungkinkan Anda mengambil data dari dalam se
 
 1. **Membaca Database**
 
-   - Lokasi: `C:\Users\[Username]\AppData\Local\ArsipDigitalOwnCloud\database.xlsx`
+   - Lokasi: `C:\Users\[Username]\AppData\Local\ToolKomida\database.xlsx`
    - Sheet: `02.DATA_ANGGOTA`
    - Filter: File PDF yang diawali dengan `02` (Data Kartu Keluarga)
 
@@ -824,7 +824,7 @@ Tombol **ðŸ”¬ Analisa Data** memungkinkan Anda mengambil data dari dalam se
 }
 ```
 
-**Lokasi**: `C:\Users\[Username]\AppData\Local\ArsipDigitalOwnCloud\app_config.json`
+**Lokasi**: `C:\Users\[Username]\AppData\Local\ToolKomida\app_config.json`
 
 **Security**:
 
@@ -860,6 +860,7 @@ ARSIPOWNCLOUD/
 ```
 
 **Data Files** (auto-generated di AppData):
+
 - `app_config.json` - Konfigurasi aplikasi
 - `database.xlsx` - Database hasil scan
 - `file_export.xlsx` - File export matching data
@@ -867,14 +868,14 @@ ARSIPOWNCLOUD/
 
 ### Config Files
 
-| File                             | Deskripsi                      | Lokasi   |
-| -------------------------------- | ------------------------------ | -------- |
-| `app_config.json`                | Konfigurasi default folder     | AppData  |
-| `database.xlsx`                  | Database hasil scan            | AppData  |
-| `file_export.xlsx`               | File export hasil scan         | AppData  |
-| `universal_scan_database.xlsx`   | Database universal scan        | AppData  |
-| `requirements.txt`               | Python dependencies            | Project  |
-| `.gitignore`                     | Git ignore rules               | Project  |
+| File                           | Deskripsi                  | Lokasi  |
+| ------------------------------ | -------------------------- | ------- |
+| `app_config.json`              | Konfigurasi default folder | AppData |
+| `database.xlsx`                | Database hasil scan        | AppData |
+| `file_export.xlsx`             | File export hasil scan     | AppData |
+| `universal_scan_database.xlsx` | Database universal scan    | AppData |
+| `requirements.txt`             | Python dependencies        | Project |
+| `.gitignore`                   | Git ignore rules           | Project |
 
 ---
 
@@ -900,9 +901,9 @@ qrcode>=8.0
 
 ### External Dependencies
 
-| Tool              | Purpose                  | Status      | Download                                                  |
-| ----------------- | ------------------------ | ----------- | --------------------------------------------------------- |
-| **Poppler**       | PDF to Images conversion | âœ… Bundled  | Included in build                                         |
+| Tool              | Purpose                  | Status         | Download                                                  |
+| ----------------- | ------------------------ | -------------- | --------------------------------------------------------- |
+| **Poppler**       | PDF to Images conversion | âœ… Bundled    | Included in build                                         |
 | **Tesseract OCR** | OCR engine for Cek NO KK | âš ï¸ Required | [Download](https://github.com/UB-Mannheim/tesseract/wiki) |
 
 **Note:**
@@ -1118,7 +1119,7 @@ pip install pandas openpyxl
 
 **Solusi**:
 
-- Hapus file di `C:\Users\[Username]\AppData\Local\ArsipDigitalOwnCloud\app_config.json`
+- Hapus file di `C:\Users\[Username]\AppData\Local\ToolKomida\app_config.json`
 - Aplikasi akan auto-create config baru
 - Set ulang default folder di menu Pengaturan
 
@@ -1128,7 +1129,7 @@ pip install pandas openpyxl
 
 **Solusi**:
 
-- Cek folder AppData: `%LOCALAPPDATA%\ArsipDigitalOwnCloud`
+- Cek folder AppData: `%LOCALAPPDATA%\ToolKomida`
 - Aplikasi akan auto-create file baru jika tidak ada
 - Restore dari backup jika tersedia
 
@@ -1239,7 +1240,7 @@ A: Path di database.xlsx mungkin sudah berubah. Scan ulang folder arsip untuk up
 A: Ya, OCR + preprocessing memakan waktu. Gunakan Pause/Resume untuk istirahat.
 
 **Q: Di mana file database.xlsx disimpan?**
-A: `C:\Users\[Username]\AppData\Local\ArsipDigitalOwnCloud\database.xlsx`
+A: `C:\Users\[Username]\AppData\Local\ToolKomida\database.xlsx`
 
 ### PDF Tool
 
@@ -1255,10 +1256,10 @@ A: Urutan sesuai pilihan file dialog. Pastikan pilih file dalam urutan yang bena
 ### AppData Storage
 
 **Q: Kenapa database.xlsx tidak ada di folder aplikasi?**
-A: Sejak v1.1.5, semua file data disimpan di AppData (`C:\Users\[Username]\AppData\Local\ArsipDigitalOwnCloud`) sesuai Windows best practice.
+A: Sejak v1.1.5, semua file data disimpan di AppData (`C:\Users\[Username]\AppData\Local\ToolKomida`) sesuai Windows best practice.
 
 **Q: Bagaimana cara backup data?**
-A: Backup folder `C:\Users\[Username]\AppData\Local\ArsipDigitalOwnCloud` secara manual atau gunakan Windows Backup.
+A: Backup folder `C:\Users\[Username]\AppData\Local\ToolKomida` secara manual atau gunakan Windows Backup.
 
 **Q: Apakah setiap user Windows perlu scan ulang?**
 A: Ya, karena setiap user punya folder AppData sendiri (user isolation).
@@ -1344,5 +1345,3 @@ Aplikasi ini untuk penggunaan internal organisasi. Tidak untuk distribusi komers
 ---
 
 **Last Updated**: Oktober 30, 2025
-
-

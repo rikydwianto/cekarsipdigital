@@ -1,5 +1,5 @@
 """
-Helper functions dan ConfigManager untuk Aplikasi Arsip Digital
+Helper functions dan ConfigManager untuk Tool Komida
 """
 import os
 import json
@@ -13,7 +13,7 @@ def get_appdata_path():
         appdata = os.path.expanduser('~\\AppData\\Local')
     
     # Buat folder khusus aplikasi
-    app_folder = os.path.join(appdata, 'ArsipDigitalOwnCloud')
+    app_folder = os.path.join(appdata, 'ToolKomida')
     if not os.path.exists(app_folder):
         os.makedirs(app_folder)
     

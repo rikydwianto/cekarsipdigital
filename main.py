@@ -1,9 +1,9 @@
 """
-Komida Tool - Main Entry Point
-Version: v1.1.6
+Tool Komida - Main Entry Point
+Version: v1.1.7
 Author: Riky Dwianto
 
-Main menu dan entry point untuk Komida Tool.
+Main menu dan entry point untuk Tool Komida.
 Semua form dipisahkan ke file terpisah untuk kemudahan maintenance.
 """
 
@@ -24,7 +24,7 @@ from app_scan_files import ScanLargeFilesApp
 
 
 class MainMenu:
-    """Main Menu - Menu utama Komida Tool"""
+    """Main Menu - Menu utama Tool Komida"""
     
     def __init__(self, root):
         self.root = root
@@ -33,7 +33,7 @@ class MainMenu:
     
     def setup_window(self):
         """Setup window utama untuk menu"""
-        self.root.title("Komida Tool - Menu Utama")
+        self.root.title("Tool Komida - Menu Utama v1.1.7")
         
         # Get screen dimensions
         screen_width = self.root.winfo_screenwidth()
@@ -86,14 +86,14 @@ class MainMenu:
         logo_label.grid(row=0, column=0, padx=10)
 
         title_label = ttk.Label(
-            header_frame, text="Komida Tool",
+            header_frame, text="Tool Komida",
             font=("Arial", self.fonts['title'], "bold")
         )
         title_label.grid(row=0, column=1, sticky="w")
 
         subtitle_label = ttk.Label(
             header_frame,
-            text="Sistem Manajemen Arsip Digital",
+            text="Sistem Manajemen Arsip Digital & Tools",
             font=("Arial", self.fonts['subtitle']),
             foreground="gray"
         )
